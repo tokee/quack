@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Quack - ${SRC_FOLDER}</title>
+    <link rel="stylesheet" type="text/css" href="${UP}quack.css" />
+</head>
+
+<body class="folder">
+<h1>Quack <span style="color: #999">${SRC_FOLDER}</span></h1>
+
+<!-- TODO: Create decent bread crumbs -->
+<p>Parent folder: <a href="../index.html">${PARENT}</a></p>
+
+<div class="images">
+<h2>Pages</h2>
+<div class="thumbs">${THUMBS_HTML}</div>
+<div class="imagelinks">
+${IMAGES_HTML}
+</div>
+</div>
+
+<div class="subfolders">
+<h2>Subfolders</h2>
+${SUBFOLDERS_HTML}
+</div>
+
+<div class="edition">
+<h2>Edition XML</h2>
+${EDITION_HTML}
+</div>
+
+</body>
+</html>
