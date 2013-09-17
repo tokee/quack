@@ -20,7 +20,7 @@ To create QA (Quality Assurance) oriented views for collections of scans, typica
  * bash
  * GraphicsMagic
  * ImageMagick (as GraphicsMagic cannot create histograms)
- * openeadragon.min.js
+ * openseadragon.min.js
  * A suitable beefy browser-equipped machine for display, depending on image sizes and ALTO complexity
 
 ## Status
