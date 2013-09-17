@@ -1,4 +1,27 @@
 #!/bin/bash
+
+#
+# Fully independent from the quack.sh script.
+#
+# Generates a report of outputs from greyscale_stats.sh.
+# Lists the images with the most absolute white and absolute black pixels.
+# Lists the number of unique greyscale values in the images.
+#
+# Usage
+# * Generate a log from a collection of images with
+#   find myimages/ -name "*.tif" -exec ./greyscale_stats.sh {} \; > myimages.log
+# * Generate a report with
+#   ./greyscale_report.sh myimages.log
+#
+# Optional usage
+# * Ignore 5% of the outer edges of the images when calculating stats by only
+#   analyzing the inner 90% of the images.
+#   find myimages/ -name "*.tif" -exec ./greyscale_stats.sh {} 90 \; > myimages.log
+# * Generate a report suitable for displaying in a browser
+#   ./greyscale_report.sh myimages.log html
+#
+
+# TODO: This should definitely be configurable in an external file ala quack.sh
 TOPX=20
 WEBROOT="http://pc254.sb.statsbiblioteket.dk/quack/tilbud2/"
 

@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# 
+# Simple statistical analysis of greyscale images.
+# Extracts key stats for darkest and brightest intensity, intended
+# for use with greyscale_report.sh
+#
+# Requirements
+# * ImageMagick
+#
+
 # Input: A greyscale image
 # Output: Name pixel_count unique_greyscales #darkest_pixels darkest_pixels_percent darkest_greyscale #brightest_pixels brightest_pixels_percent lightest_greyscale
 
