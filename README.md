@@ -2,11 +2,11 @@
 
 ## Purpose
 
-To create QA (Quality Assurance) oriented views for collections of scans, typically from books or newspapers, with corresponding [http://www.loc.gov/standards/alto/](ALTO)-files.
+To create QA (Quality Assurance) oriented views for collections of scans, typically from books or newspapers, with corresponding [ALTO](http://www.loc.gov/standards/alto/)-files.
 
 ## Features
 
- * Smooth zoom & pan of large images thanks to [http://openseadragon.github.io/](OpenSeadragon)
+ * Smooth zoom & pan of large images thanks to [OpenSeadragon](http://openseadragon.github.io/)
  * Marking of blown highlights & lowlights by colored overlays (toggable)
  * TextBlock marking by boxes (toggable)
  * Interactive inspection of OCR (hover the mouse over a TextBlock)
