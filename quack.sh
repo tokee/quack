@@ -44,9 +44,15 @@
 # Settings below. Instead of changing this file, it is recommended to
 # create a new file "quack.settings" with the wanted setup as it will
 # override the defaults below.
+
+# The types of images to pull from source
 IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
+# The extension of the ALTO files corresponding to the image files
+# ALTO files are expected to be located next to the image files:
+#   OurScanProject_batch_2013-09-18_page_007.tif
+#   OurScanProject_batch_2013-09-18_page_007.alto.xml
 ALTO_EXT=".alto.xml"
-export IMAGE_DISP_EXT=".png"
+export IMAGE_DISP_EXT="png"
 export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
@@ -152,11 +158,11 @@ function makeImageParams() {
     # Used by function caller
     # Must be mirrored in makeImages
     SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
-    DEST_IMAGE="${DEST_FOLDER}/${BASE}${IMAGE_DISP_EXT}"
-    HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram${IMAGE_DISP_EXT}"
+    DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
-    WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
-    BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
+    BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
 }
 
@@ -178,11 +184,11 @@ function makeImages() {
     # Do not cheat by calling makeImageParams as makeImages might
     # be called in parallel
     local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
-    local DEST_IMAGE="${DEST_FOLDER}/${BASE}${IMAGE_DISP_EXT}"
-    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram${IMAGE_DISP_EXT}"
+    local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
-    local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
-    local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
+    local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
 
     if [ ! -f $SOURCE_IMAGE ]; then
@@ -195,7 +201,7 @@ function makeImages() {
         gm convert "$SOURCE_IMAGE" "$DEST_IMAGE"
     fi
 
-    if [ ".png" == ${IMAGE_DISP_EXT} ]; then
+    if [ "png" == ${IMAGE_DISP_EXT} ]; then
         # PNG is fairly fast to decode so use that as source
         local CONV="$DEST_IMAGE"
     else
