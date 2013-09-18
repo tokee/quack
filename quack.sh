@@ -536,10 +536,10 @@ function makePreviewPage() {
         TILE_SOURCES="      type: 'legacy-image-pyramid',\
       levels:[\
         {\
-          url: '${IMAGE}',\
+          url: '${EDEST}',\
           width:  ${IMAGE_WIDTH},\
           height: ${IMAGE_HEIGHT}\
-        },\
+        }\
       ]"$'\n'
     fi
     IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
