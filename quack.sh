@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.0 beta - Quality assurance tool for text scanning projects.
+# Quack 1.1 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -44,46 +44,76 @@
 # Settings below. Instead of changing this file, it is recommended to
 # create a new file "quack.settings" with the wanted setup as it will
 # override the defaults below.
+
+# The types of images to pull from source
 IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
+# The extension of the ALTO files corresponding to the image files
+# ALTO files are expected to be located next to the image files:
+#   OurScanProject_batch_2013-09-18_page_007.tif
+#   OurScanProject_batch_2013-09-18_page_007.alto.xml
 ALTO_EXT=".alto.xml"
-export IMAGE_DISP_EXT=".png"
+# The image format for the QA image. Possible values are png and jpg.
+# png is recommended if QA should check image quality in detail.
+export IMAGE_DISP_EXT="png"
+# If jpg is chosen for IMAGE_DISP_EXT, this quality setting (1-100)
+# will be used when genrerating the images.
+# Note: This does (unfortunately) not set the quality when tiles and
+# jpg has been chosen.
+export IMAGE_DISP_QUALITY="95"
+# The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
-# If true, preview-pages will not be regenerated
+# If true, preview-pages will not be regenerated if the script is executed a
+# second time with the same source and destination.
 SKIP_EXISTING_PREVIEWS=true
+# Number of threads used for image processing. Note that histogram generation
+# is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
 THREADS=4
 # If true, thumbnails are generated even if they already exists
 FORCE_THUMBNAILS=false
 # If true, the script attempts to find all alternative versions of the current image
-# based on the file name. Highly Statsbiblioteket-specific!
+# in other fulders under source. Suitable for easy switching between alternate scans
+# of the same material.
 RESOLVE_ALTERNATIVES=false
 # If the IDNEXT attribute starts with 'ART' it is ignored
 # Used to avoid visually linking everything on the page
-# False as Ninestars uses ART for each TextBlock
 SKIP_NEXT_ART=false
 # How much of the image to retain, cropping from center, when calculating
-# histogram. Empty value = no crop. Valid values: 1-100
+# histograms. Empty value = no crop. Valid values: 1-100
+# This us usable for generating proper histograms for scans where the border
+# is different from the rest of the image. Artifacts from rotations is an example.
+# Suggested values are 85-95%.
 CROP_PERCENT=""
+# If true, tiles are generated for OpenSeadragon. This requires Robert Barta's 
+# deepzoom (see link in README.md) and will generate a lot of 260x260 pixel tiles.
+# If false, a single image will be used with OpenSeadragon. This is a lot heavier
+# on the browser but avoids the size and file-count overhead of the tiles.
+TILE="false"
 
+# End default settings. User-supplied overrides will be loaded from quack.settings
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
-    echo "Sourcing settings from quack.settings"
+    echo "Sourcing user settings from quack.settings"
     source "quack.settings"
 fi
-PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 popd > /dev/null
 
+PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 FOLDER_TEMPLATE="$ROOT/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/image_template.html"
 DRAGON="openseadragon.min.js"
 
 function usage() {
-    echo "./quack.sh source destination"
+    echo "quack 1.1 beta - Quality Assurance oriented ALTO viewer"
+    echo ""
+    echo "Usage: ./quack.sh source destination"
     echo ""
     echo "source:      The top folder for images with ALTO files"
     echo "destination: The wanted location of the presentation structure"
+    echo ""
+    echo "See comments in script and README.md for details."
 }
 
 SOURCE=$1
@@ -91,7 +121,7 @@ if [ "." == ".$SOURCE" ]; then
     echo "Error: Missing source" >&2
     echo ""
     usage
-    exit
+    exit 2
 fi
 pushd $SOURCE > /dev/null
 SOURCE_FULL=`pwd`
@@ -102,7 +132,7 @@ if [ "." == ".$DEST" ]; then
     echo "Error: Missing destination" >&2
     echo ""
     usage
-    exit
+    exit 2
 fi
 if [ ! -f "$ROOT/$DRAGON" ]; then
     echo "The file $ROOT/$DRAGON does not exist" >&2
@@ -152,22 +182,24 @@ function makeImageParams() {
     # Used by function caller
     # Must be mirrored in makeImages
     SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
-    DEST_IMAGE="${DEST_FOLDER}/${BASE}${IMAGE_DISP_EXT}"
-    HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram${IMAGE_DISP_EXT}"
+    DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
-    WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
-    BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
+    BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
+    TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 }
 
 # Creates a presentation image and a histogram for the given image
-# srcFolder dstFolder image crop presentation_script
+# srcFolder dstFolder image crop presentation_script tile
 function makeImages() {
     local SRC_FOLDER=$1
     local DEST_FOLDER=$2
     local IMAGE=$3
     local CROP_PERCENT=$5
     local PRESENTATION_SCRIPT=$6
+    local TILE=$7
 
 #    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
 
@@ -178,28 +210,37 @@ function makeImages() {
     # Do not cheat by calling makeImageParams as makeImages might
     # be called in parallel
     local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
-    local DEST_IMAGE="${DEST_FOLDER}/${BASE}${IMAGE_DISP_EXT}"
-    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram${IMAGE_DISP_EXT}"
+    local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
-    local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
-    local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
+    local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
+    local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 
     if [ ! -f $SOURCE_IMAGE ]; then
         echo "The source image $S does not exists" >&2
         exit
     fi
 
+    # No matter what, we create the full main presentational image as it
+    # might be requested for download
     if [ ! -f $DEST_IMAGE ]; then
         echo " - ${DEST_IMAGE##*/}"
-        gm convert "$SOURCE_IMAGE" "$DEST_IMAGE"
+        gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
-    if [ ".png" == ${IMAGE_DISP_EXT} ]; then
+    if [ "png" == ${IMAGE_DISP_EXT} ]; then
         # PNG is fairly fast to decode so use that as source
         local CONV="$DEST_IMAGE"
     else
         local CONV="$SRC_IMAGE"
+    fi
+
+    if [ ! -d "$TILE_FOLDER" ]; then
+        echo " - ${TILE_FOLDER##*/} (deepzoom)"
+        # TODO: Specify JPEG quality
+        deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
     if [ ! -f $WHITE_IMAGE ]; then
@@ -479,6 +520,29 @@ function makePreviewPage() {
     IHTML=`template "$IHTML" "IMAGE" "$EDEST"`
     IHTML=`template "$IHTML" "IMAGE_WIDTH" "$IMAGE_WIDTH"`
     IHTML=`template "$IHTML" "IMAGE_HEIGHT" "$IMAGE_HEIGHT"`
+    if [ "true" == "$TILE" ]; then
+        TILE_SOURCES="      Image: {\
+        xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
+        Url:      \"${TILE_FOLDER##*/}/\",\
+        Format:   \"$IMAGE_DISP_EXT\",\
+        Overlap:  \"4\",\
+        TileSize: \"256\",\
+        Size: {\
+          Width:  \"$IMAGE_WIDTH\",\
+          Height: \"$IMAGE_HEIGHT\"\
+        }\
+      }"$'\n'
+    else
+        TILE_SOURCES="      type: 'legacy-image-pyramid',\
+      levels:[\
+        {\
+          url: '${EDEST}',\
+          width:  ${IMAGE_WIDTH},\
+          height: ${IMAGE_HEIGHT}\
+        }\
+      ]"$'\n'
+    fi
+    IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
     THUMB_LINK=${THUMB_IMAGE##*/}
     IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
     IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
@@ -511,7 +575,7 @@ function makePreviewPage() {
 
  }
 
-# up parent srcFolder dstFolder
+# Input: up parent srcFolder dstFolder
 #
 function makeIndex() {
     local UP=$1
@@ -551,7 +615,7 @@ function makeIndex() {
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
     export -f makeImages
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" \;
+    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
     local THUMBS_HTML=""
