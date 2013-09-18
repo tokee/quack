@@ -26,12 +26,13 @@ function get_commands() {
 
     if [ "." != ".`echo \"$SOURCE\" | grep -o inesta`" ]; then
         # This provider has very dark scans with no intensities > 240
-        COMMANDS="-geometry 50%x> -unsharp 0.8x0.1+0.8+2.0 -level 0,1.0,230 -quality 90"
+        COMMANDS="-geometry 50%x> -unsharp 0.8x0.1+0.8+2.0 -level 0,1.0,220 -quality 90"
         return
     fi
     if [ "." != ".`echo \"$SOURCE\" | grep -o pex`" ]; then
         # This provider has scans practically without any blown high- or low-lights
-        COMMANDS="-geometry 50%x> -unsharp 0.8x0.1+0.8+2.0 -level 15,1.0,240 -quality 90"
+        # Input is 400 DPI so we need to scale a bit more to reach ~150DPI
+        COMMANDS="-geometry 38%x> -unsharp 0.8x0.1+0.8+2.0 -level 30,0.8,240 -quality 90"
         return
     fi
     COMMANDS="$DEFAULT_COMMANDS"
