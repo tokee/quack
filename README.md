@@ -5,10 +5,10 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
 ## Features
 
  * Smooth zoom & pan of large images thanks to OpenSeadragon
- * Marking of blown highlights & lowlights by colored overlays (toggable)
- * TextBlock marking by boxes (toggable)
+ * Marking of blown highlights & lowlights by colored overlays (toggleable)
+ * TextBlock marking by boxes (toggleable)
  * Interactive inspection of OCR (hover the mouse over a TextBlock)
- * Grid lines for checking skewing and rotation (toggable)
+ * Grid lines for checking skewing and rotation (toggleable)
  * Folder overview with thumbnails
  * Histogram, optionally not analyzing the edges of the image
 
