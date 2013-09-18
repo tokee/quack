@@ -29,9 +29,8 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
   * Reduce the amount of identifys and template rewrites
   * Make it possible to generate pages in parallel
  * Lower memory requirements by generating histograms without ImageMagick
- * Optional tile mode instead of a single image for display
  * Optional removal of destination files when source files are removed
- * More flexibility and customization (quack was developed for internal use at the State and University Library, Denmark)
+ * More flexibility and customization (quack was originally developed for internal use at the State and University Library, Denmark)
   * ALTO files at another location than image files
  * Add image & ALTO sample files
  * Integrate greyscale statistics
