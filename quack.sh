@@ -83,9 +83,9 @@ if [ -e "quack.settings" ]; then
     echo "Sourcing settings from quack.settings"
     source "quack.settings"
 fi
-PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 popd > /dev/null
 
+PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 FOLDER_TEMPLATE="$ROOT/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/image_template.html"
 DRAGON="openseadragon.min.js"
@@ -102,7 +102,7 @@ if [ "." == ".$SOURCE" ]; then
     echo "Error: Missing source" >&2
     echo ""
     usage
-    exit
+    exit 2
 fi
 pushd $SOURCE > /dev/null
 SOURCE_FULL=`pwd`
@@ -113,7 +113,7 @@ if [ "." == ".$DEST" ]; then
     echo "Error: Missing destination" >&2
     echo ""
     usage
-    exit
+    exit 2
 fi
 if [ ! -f "$ROOT/$DRAGON" ]; then
     echo "The file $ROOT/$DRAGON does not exist" >&2
