@@ -36,7 +36,7 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
 
 ## Verbiage
 
-This is basically a simple bash script that grew to 600+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creatint TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
+This is basically a simple bash script that grew to 600+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creating TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
 
 Currently the display of the scans is not tile based and thus requires the browser to handle the full images directly. This can be quite taxing. It has been tested with Firefox & Chrome. Chrome was markedly faster as of 2013-09-17.
 
