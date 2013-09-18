@@ -52,7 +52,12 @@ IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
 #   OurScanProject_batch_2013-09-18_page_007.tif
 #   OurScanProject_batch_2013-09-18_page_007.alto.xml
 ALTO_EXT=".alto.xml"
+# The image format for the QA image. Possible values are png and jpg.
+# png is recommended if QA should check image quality in detail.
 export IMAGE_DISP_EXT="png"
+# If jpg is chosen for IMAGE_DISP_EXT, this quality setting (1-100)
+# will be used when genrerating the images.
+export IMAGE_DISP_QUALITY="95"
 export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
@@ -198,7 +203,7 @@ function makeImages() {
 
     if [ ! -f $DEST_IMAGE ]; then
         echo " - ${DEST_IMAGE##*/}"
-        gm convert "$SOURCE_IMAGE" "$DEST_IMAGE"
+        gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
     if [ "png" == ${IMAGE_DISP_EXT} ]; then
