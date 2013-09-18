@@ -94,14 +94,7 @@ ${ALTERNATIVES}
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-      type: 'legacy-image-pyramid',
-      levels:[
-        {
-          url: '${IMAGE}',
-          width:  ${IMAGE_WIDTH},
-          height: ${IMAGE_HEIGHT}
-        },
-      ]
+      ${TILE_SOURCES}
     },
     ${OVERLAYS}
     });

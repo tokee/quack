@@ -57,7 +57,10 @@ ALTO_EXT=".alto.xml"
 export IMAGE_DISP_EXT="png"
 # If jpg is chosen for IMAGE_DISP_EXT, this quality setting (1-100)
 # will be used when genrerating the images.
+# Note: This does (unfortunately) not set the quality when tiles and
+# jpg has been chosen.
 export IMAGE_DISP_QUALITY="95"
+# The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
@@ -82,6 +85,11 @@ SKIP_NEXT_ART=false
 # is different from the rest of the image. Artifacts from rotations is an example.
 # Suggested values are 85-95%.
 CROP_PERCENT=""
+# If true, tiles are generated for OpenSeadragon. This requires Robert Barta's 
+# deepzoom (see link in README.md) and will generate a lot of 260x260 pixel tiles.
+# If false, a single image will be used with OpenSeadragon. This is a lot heavier
+# on the browser but avoids the size and file-count overhead of the tiles.
+TILE="false"
 
 # End default settings. User-supplied overrides will be loaded from quack.settings
 pushd `dirname $0` > /dev/null
@@ -180,16 +188,18 @@ function makeImageParams() {
     WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
+    TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 }
 
 # Creates a presentation image and a histogram for the given image
-# srcFolder dstFolder image crop presentation_script
+# srcFolder dstFolder image crop presentation_script tile
 function makeImages() {
     local SRC_FOLDER=$1
     local DEST_FOLDER=$2
     local IMAGE=$3
     local CROP_PERCENT=$5
     local PRESENTATION_SCRIPT=$6
+    local TILE=$7
 
 #    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
 
@@ -206,12 +216,15 @@ function makeImages() {
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
+    local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 
     if [ ! -f $SOURCE_IMAGE ]; then
         echo "The source image $S does not exists" >&2
         exit
     fi
 
+    # No matter what, we create the full main presentational image as it
+    # might be requested for download
     if [ ! -f $DEST_IMAGE ]; then
         echo " - ${DEST_IMAGE##*/}"
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
@@ -222,6 +235,12 @@ function makeImages() {
         local CONV="$DEST_IMAGE"
     else
         local CONV="$SRC_IMAGE"
+    fi
+
+    if [ ! -d "$TILE_FOLDER" ]; then
+        echo " - ${TILE_FOLDER##*/} (deepzoom)"
+        # TODO: Specify JPEG quality
+        deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
     if [ ! -f $WHITE_IMAGE ]; then
@@ -501,6 +520,29 @@ function makePreviewPage() {
     IHTML=`template "$IHTML" "IMAGE" "$EDEST"`
     IHTML=`template "$IHTML" "IMAGE_WIDTH" "$IMAGE_WIDTH"`
     IHTML=`template "$IHTML" "IMAGE_HEIGHT" "$IMAGE_HEIGHT"`
+    if [ "true" == "$TILE" ]; then
+        TILE_SOURCES="      Image: {\
+        xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
+        Url:      \"${TILE_FOLDER##*/}/\",\
+        Format:   \"$IMAGE_DISP_EXT\",\
+        Overlap:  \"4\",\
+        TileSize: \"256\",\
+        Size: {\
+          Width:  \"$IMAGE_WIDTH\",\
+          Height: \"$IMAGE_HEIGHT\"\
+        }\
+      }"$'\n'
+    else
+        TILE_SOURCES="      type: 'legacy-image-pyramid',\
+      levels:[\
+        {\
+          url: '${IMAGE}',\
+          width:  ${IMAGE_WIDTH},\
+          height: ${IMAGE_HEIGHT}\
+        },\
+      ]"$'\n'
+    fi
+    IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
     THUMB_LINK=${THUMB_IMAGE##*/}
     IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
     IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
@@ -533,7 +575,7 @@ function makePreviewPage() {
 
  }
 
-# up parent srcFolder dstFolder
+# Input: up parent srcFolder dstFolder
 #
 function makeIndex() {
     local UP=$1
@@ -573,7 +615,7 @@ function makeIndex() {
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
     export -f makeImages
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" \;
+    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
     local THUMBS_HTML=""

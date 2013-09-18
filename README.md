@@ -21,6 +21,7 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
  * [openseadragon.min.js](http://openseadragon.github.io/)
  * A suitable beefy browser equipped machine for display, depending on image sizes and ALTO complexity
  * [deepzoom](http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom) (only if tile based display is enabled)
+  * Perl (required by deepzoom)
 
 ## Potential improvements
 
