@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.0 beta - Quality assurance tool for text scanning projects.
+# Quack 1.1 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -61,26 +61,33 @@ export IMAGE_DISP_QUALITY="95"
 export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
-# If true, preview-pages will not be regenerated
+# If true, preview-pages will not be regenerated if the script is executed a
+# second time with the same source and destination.
 SKIP_EXISTING_PREVIEWS=true
+# Number of threads used for image processing. Note that histogram generation
+# is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
 THREADS=4
 # If true, thumbnails are generated even if they already exists
 FORCE_THUMBNAILS=false
 # If true, the script attempts to find all alternative versions of the current image
-# based on the file name. Highly Statsbiblioteket-specific!
+# in other fulders under source. Suitable for easy switching between alternate scans
+# of the same material.
 RESOLVE_ALTERNATIVES=false
 # If the IDNEXT attribute starts with 'ART' it is ignored
 # Used to avoid visually linking everything on the page
-# False as Ninestars uses ART for each TextBlock
 SKIP_NEXT_ART=false
 # How much of the image to retain, cropping from center, when calculating
-# histogram. Empty value = no crop. Valid values: 1-100
+# histograms. Empty value = no crop. Valid values: 1-100
+# This us usable for generating proper histograms for scans where the border
+# is different from the rest of the image. Artifacts from rotations is an example.
+# Suggested values are 85-95%.
 CROP_PERCENT=""
 
+# End default settings. User-supplied overrides will be loaded from quack.settings
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
-    echo "Sourcing settings from quack.settings"
+    echo "Sourcing user settings from quack.settings"
     source "quack.settings"
 fi
 popd > /dev/null
@@ -91,10 +98,14 @@ IMAGE_TEMPLATE="$ROOT/image_template.html"
 DRAGON="openseadragon.min.js"
 
 function usage() {
-    echo "./quack.sh source destination"
+    echo "quack 1.1 beta - Quality Assurance oriented ALTO viewer"
+    echo ""
+    echo "Usage: ./quack.sh source destination"
     echo ""
     echo "source:      The top folder for images with ALTO files"
     echo "destination: The wanted location of the presentation structure"
+    echo ""
+    echo "See comments in script and README.md for details."
 }
 
 SOURCE=$1
