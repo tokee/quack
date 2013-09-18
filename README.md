@@ -23,10 +23,18 @@ To create QA (Quality Assurance) oriented views for collections of scans, typica
  * openseadragon.min.js
  * A suitable beefy browser-equipped machine for display, depending on image sizes and ALTO complexity
 
-## Status
+## Potential improvements
 
- * The script is not very flexible as it was developed for internal use at the State and University Library, Denmark.
- * There are no sample files due to copyright (a slow clearing process is underway)
+ * Speed up HTML generation
+  * Reduce the amount of identifys and template rewrites
+  * Make it possible to generate pages in parallel
+ * Lower memory requirements by generating histograms without ImageMagick
+ * Optional tile mode instead of a single image for display
+ * Optional removal of destination files when source files are removed
+ * More flexibility and customization (quack was developed for internal use at the State and University Library, Denmark)
+ * Add image & ALTO sample files
+ * Integrate greyscale statistics
+ * Show blown high- and low-lights on the thumbnail in folder view
 
 ## Verbiage
 

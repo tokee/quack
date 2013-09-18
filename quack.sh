@@ -41,11 +41,6 @@
 #   a fairly current browser with JavaScript enabled
 #
 
-# TODO: Speed up html generation
-# TODO: Show links to randomly selected previews on the first HTML page
-# TODO: Optional deepzoom tiles
-# TODO: Add optional removal of destination files when source files are removed
-
 # Settings below. Instead of changing this file, it is recommended to
 # create a new file "quack.settings" with the wanted setup as it will
 # override the defaults below.
