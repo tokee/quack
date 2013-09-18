@@ -77,7 +77,7 @@ if [ -e "quack.settings" ]; then
     echo "Sourcing settings from quack.settings"
     source "quack.settings"
 fi
-
+PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 popd > /dev/null
 
 FOLDER_TEMPLATE="$ROOT/folder_template.html"
@@ -162,28 +162,33 @@ function makeImageParams() {
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
     WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
 }
 
 # Creates a presentation image and a histogram for the given image
-# srcFolder dstFolder image crop
+# srcFolder dstFolder image crop presentation_script
 function makeImages() {
     local SRC_FOLDER=$1
     local DEST_FOLDER=$2
     local IMAGE=$3
     local CROP_PERCENT=$5
+    local PRESENTATION_SCRIPT=$6
 
 #    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
 
     local SANS_PATH=${IMAGE##*/}
     local BASE=${SANS_PATH%.*}
 
-    # Should mirror the ones in makeImageParams
+    # Must mirror the ones in makeImageParams
+    # Do not cheat by calling makeImageParams as makeImages might
+    # be called in parallel
     local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
     local DEST_IMAGE="${DEST_FOLDER}/${BASE}${IMAGE_DISP_EXT}"
     local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram${IMAGE_DISP_EXT}"
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white${IMAGE_DISP_EXT}"
     local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black${IMAGE_DISP_EXT}"
+    local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
 
     if [ ! -f $SOURCE_IMAGE ]; then
         echo "The source image $S does not exists" >&2
@@ -210,6 +215,11 @@ function makeImages() {
     if [ ! -f $BLACK_IMAGE ]; then
         echo " - ${BLACK_IMAGE##*/}"
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
+    fi
+
+    if [ ! -f $PRESENTATION_IMAGE ]; then
+        echo " - ${PRESENTATION_IMAGE##*/}"
+        $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
     fi
 
     if [ ! -f $HIST_IMAGE ]; then
@@ -423,12 +433,15 @@ function makePreviewPage() {
         exit
     fi
 
-    IDENTIFY=`identify "$DEST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
+    local IDENTIFY=`identify "$DEST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     IMAGE_WIDTH=`echo $IDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     IMAGE_HEIGHT=`echo $IDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
-    TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
+    local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
+    PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
+    PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
    
     if [ "true" == "$SKIP_EXISTING_PREVIEWS" -a -e "$P" ]; then
         return
@@ -475,6 +488,10 @@ function makePreviewPage() {
     IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
     IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
     IHTML=`template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"`
+    PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
+    IHTML=`template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"`
+    IHTML=`template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"`
+    IHTML=`template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"`
     WHITE_LINK=${WHITE_IMAGE##*/}
     IHTML=`template "$IHTML" "WHITE" "$WHITE_LINK"`
     BLACK_LINK=${BLACK_IMAGE##*/}
@@ -539,7 +556,7 @@ function makeIndex() {
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
     export -f makeImages
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" \;
+    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" \;
 
     # Generate pages
     local THUMBS_HTML=""

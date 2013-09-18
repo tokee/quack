@@ -141,3 +141,11 @@ ul.alternatives li + li:before {
     background-size: 100% 100%;
     pointer-events: none;
 }
+
+#presentation-display {
+    position: relative;
+    margin-right: 340px;
+    height: 900px;
+    border: 1px solid black;
+    overflow: hidden;
+}
