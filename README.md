@@ -1,8 +1,6 @@
 # Quack
 
-## Purpose
-
-To create QA (Quality Assurance) oriented views for collections of scans, typically from books or newspapers, with corresponding [ALTO](http://www.loc.gov/standards/alto/)-files.
+An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assurance oriented display of a collections of scans, typically from books or newspapers.
 
 ## Features
 
@@ -38,11 +36,11 @@ To create QA (Quality Assurance) oriented views for collections of scans, typica
 
 ## Verbiage
 
-This is basically a simple bash script that grew to 600+ lines. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creation of TextBlock boxes and OCS display. No webserver is required as the pages can be used directly from the file system.
+This is basically a simple bash script that grew to 600+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creatint TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
 
 Currently the display of the scans is not tile based and thus requires the browser to handle the full images directly. This can be quite taxing. It has been tested with Firefox & Chrome. Chrome was markedly faster as of 2013-09-17.
 
-The choice of PNG was due to the QA-focus - no JPEG artifacts, thanks! This should probably be more flexible as the input can be JPEG and because some people do not require pixel perfectness for their QA.
+The choice of PNG was due to the QA-focus - no JPEG artifacts, thanks! This should probably be more flexible as the input can be JPEG (which makes the conversion to PNG plain silly) and because some people do not require pixel perfectness for their QA.
 
 ## Development
 
