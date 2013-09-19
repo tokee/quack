@@ -77,20 +77,20 @@ THREADS=4
 # FORCE_ options should be "true".
 
 # If true, image-pages will be generated even if they already exists.
-FORCE_PAGES=false
+export FORCE_PAGES=false
 # If true, the main QA-images will be generated even if they already exists.
-FORCE_QAIMAGE=false
+export FORCE_QAIMAGE=false
 # If true, thumbnails will be generated even if they already exists.
-FORCE_THUMBNAILS=false
+export FORCE_THUMBNAILS=false
 # If true, blown high- and low-light overlays will be generated even if they already exists.
-FORCE_BLOWN=false
+export FORCE_BLOWN=false
 # If true, presentation images will be generated even if they already exists.
-FORCE_PRESENTATION=false
+export FORCE_PRESENTATION=false
 # If true, histogram images will be generated even if they already exists.
-FORCE_HISTOGRAM=false
+export FORCE_HISTOGRAM=false
 # If true, tile images will be generated even if they already exists.
 # This is only relevant if TILE="true"
-FORCE_TILES=false
+export FORCE_TILES=false
 
 # If true, the script attempts to find all alternative versions of the current image
 # in other fulders under source. Suitable for easy switching between alternate scans
@@ -214,6 +214,23 @@ function makeImageParams() {
     TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 }
 
+# If force is true and image exists, image is deleted and true returned
+# If force is true and image does not exist, true is returned
+# If force is false and image exists, false is returned
+# If force is false and image does not exists, true is returned
+# Input: force image
+# Output: true/false. Use with 'if should_generate true dummy; then'
+should_generate() {
+    local FORCE="$1"
+    local IMG="$2"
+
+    if [ "true" == "$FORCE" -a -e "$IMG" ]; then
+        rm -rf "$IMG"
+    fi
+    [ ! -e "$IMG" ]
+}
+export -f should_generate
+
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
 function makeImages() {
@@ -246,12 +263,9 @@ function makeImages() {
         exit
     fi
 
-    if [ "true" == "$FORCE_QAIMAGE" -a -f "$DEST_IMAGE" ]; then
-        rm -rf "$DEST_IMAGE"
-    fi
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
-    if [ ! -f $DEST_IMAGE ]; then
+    if should_generate "$FORCE_QAIMAGE" "$DEST_IMAGE"; then
         echo " - ${DEST_IMAGE##*/}"
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
@@ -263,27 +277,18 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_TILES" -a -f "$TILE_FOLDER" ]; then
-        rm -rf "$TILE_FOLDER"
-    fi
-    if [ "true" == "$TILE" -a ! -d "$TILE_FOLDER" ]; then
+    if should_generate "$FORCE_TILES" "$TILE_FOLDER"; then
         echo " - ${TILE_FOLDER##*/} (deepzoom)"
         # TODO: Specify JPEG quality
         deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
-    if [ "true" == "$FORCE_BLOWN" -a -f "$WHITE_IMAGE" ]; then
-        rm -f "$WHITE_IMAGE"
-    fi
-    if [ ! -f "$WHITE_IMAGE" ]; then
+    if should_generate "$FORCE_BLOWN" "$WHITE_IMAGE"; then
         echo " - ${WHITE_IMAGE##*/}"
         gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#FF0000 -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_BLOWN" -a -f "$BLACK_IMAGE" ]; then
-        rm -f "$BLACK_IMAGE"
-    fi
-    if [ ! -f $BLACK_IMAGE ]; then
+    if should_generate "$FORCE_BLOWN" "$BLACK_IMAGE"; then
         echo " - ${BLACK_IMAGE##*/}"
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
@@ -296,10 +301,7 @@ function makeImages() {
         $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_HISTOGRAM" -a -f "$HIST_IMAGE" ]; then
-        rm -f "$HIST_IMAGE"
-    fi
-    if [ ! -f $HIST_IMAGE ]; then
+    if should_generate "$FORCE_HISTOGRAM" "$HIST_IMAGE"; then
         # Remove "-separate -append" to generate a RGB histogram
         # http://www.imagemagick.org/Usage/files/#histogram
         echo " - ${HIST_IMAGE##*/}"
@@ -310,10 +312,7 @@ function makeImages() {
         fi
     fi
 
-    if [ "true" == "$FORCE_THUMBNAILS" -a -f "$THUMB_IMAGE" ]; then
-        rm -f "$THUMB_IMAGE"
-    fi
-    if [ ! -f "$THUMB_IMAGE" ]; then
+    if should_generate "$FORCE_THUMBNAILS" "$THUMB_IMAGE"; then
         echo " - ${THUMB_IMAGE##*/}"
         gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
     fi
