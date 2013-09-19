@@ -149,3 +149,22 @@ ul.alternatives li + li:before {
     border: 1px solid black;
     overflow: hidden;
 }
+
+/* Folder view specific styles below */
+div.imagelinks {
+    clear: both;
+}
+div.thumb {
+    float: left;
+}
+div.thumbs a {
+    position: relative;
+    display: block;
+}
+.thumboverlay {
+    /* Hidden by default, enable with JavaScript */
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

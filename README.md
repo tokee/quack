@@ -34,7 +34,6 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
   * ALTO files at another location than image files
  * Add image & ALTO sample files
  * Integrate greyscale statistics
- * Show blown high- and low-lights on the thumbnail in folder view
 
 ## Verbiage
 
