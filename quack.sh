@@ -218,18 +218,22 @@ function makeImageParams() {
 # If force is true and image does not exist, true is returned
 # If force is false and image exists, false is returned
 # If force is false and image does not exists, true is returned
-# Input: force image
-# Output: true/false. Use with 'if should_generate true dummy; then'
-should_generate() {
+# Input: force image designation
+# Output: true/false. Use with 'if shouldGenerate true dummy; then'
+shouldGenerate() {
     local FORCE="$1"
     local IMG="$2"
+    local DES="$3"
 
-    if [ "true" == "$FORCE" -a -e "$IMG" ]; then
+    if [ ".true" == ".$FORCE" -a -e "$IMG" ]; then
         rm -rf "$IMG"
+    fi
+    if [ ! -e "$IMG" -a "." != ".$DES" ]; then
+        echo " - ${IMG##*/} ($DES)"
     fi
     [ ! -e "$IMG" ]
 }
-export -f should_generate
+export -f shouldGenerate
 
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
@@ -265,8 +269,7 @@ function makeImages() {
 
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
-    if should_generate "$FORCE_QAIMAGE" "$DEST_IMAGE"; then
-        echo " - ${DEST_IMAGE##*/}"
+    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA"; then
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
@@ -277,34 +280,26 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
-    if should_generate "$FORCE_TILES" "$TILE_FOLDER"; then
-        echo " - ${TILE_FOLDER##*/} (deepzoom)"
+    if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
         deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
-    if should_generate "$FORCE_BLOWN" "$WHITE_IMAGE"; then
-        echo " - ${WHITE_IMAGE##*/}"
+    if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#FF0000 -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
-    if should_generate "$FORCE_BLOWN" "$BLACK_IMAGE"; then
-        echo " - ${BLACK_IMAGE##*/}"
+    if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_PRESENTATION" -a -f "$PRESENTATION_IMAGE" ]; then
-        rm -f "$PRESENTATION_IMAGE"
-    fi
-    if [ ! -f $PRESENTATION_IMAGE ]; then
-        echo " - ${PRESENTATION_IMAGE##*/}"
+    if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
         $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
     fi
 
-    if should_generate "$FORCE_HISTOGRAM" "$HIST_IMAGE"; then
+    if shouldGenerate "$FORCE_HISTOGRAM" "$HIST_IMAGE" "histogram"; then
         # Remove "-separate -append" to generate a RGB histogram
         # http://www.imagemagick.org/Usage/files/#histogram
-        echo " - ${HIST_IMAGE##*/}"
         if [ "." == ".$CROP_PERCENT" ]; then
             convert "$CONV" -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
         else
@@ -312,8 +307,7 @@ function makeImages() {
         fi
     fi
 
-    if should_generate "$FORCE_THUMBNAILS" "$THUMB_IMAGE"; then
-        echo " - ${THUMB_IMAGE##*/}"
+    if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
         gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
     fi
 
