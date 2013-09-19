@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.1 beta - Quality assurance tool for text scanning projects.
+# Quack 1.2 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -178,7 +178,7 @@ function copyFiles () {
         mkdir -p $DEST
     fi
     cp "${ROOT}/${DRAGON}" "$DEST"
-    cp "${ROOT}/quack.js" "$DEST"
+    cp ${ROOT}/*.js "$DEST"
     cp ${ROOT}/*.css "$DEST"
 }
 
@@ -216,6 +216,7 @@ function makeImageParams() {
     DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
+    THUMB_LINK=${THUMB_IMAGE##*/}
     WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
@@ -265,6 +266,7 @@ function makeImages() {
     local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
+    local THUMB_LINK=${THUMB_IMAGE##*/}
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     local THUMB_OVERLAY_WHITE="${DEST_FOLDER}/${BASE}.white.thumb.png"
@@ -333,8 +335,8 @@ function makeImages() {
         # handle resizing of alpha-channel PNGs followed by color reduction
         convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_BLACK"
     fi
-
 }
+export -f makeImages
 
 # Generates overlays for the stated block and updates idnext & idprev
 # altoxml (newlines removed) tag class
@@ -600,7 +602,6 @@ function makePreviewPage() {
       ]"$'\n'
     fi
     IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
-    THUMB_LINK=${THUMB_IMAGE##*/}
     IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
     IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
     IHTML=`template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"`
@@ -671,7 +672,6 @@ function makeIndex() {
 
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
-    export -f makeImages
     echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
@@ -685,7 +685,9 @@ function makeIndex() {
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
             makePreviewPage $UP $PARENT $SRC_FOLDER $DEST_FOLDER $I "$PREV_IMAGE" "$NEXT_IMAGE"
             IMAGES_HTML="${IMAGES_HTML}<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
-            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
+
+            THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
+#            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
             PREV_IMAGE=$I
         done
         IMAGES_HTML="${IMAGES_HTML}</ul>"$'\n'

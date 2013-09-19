@@ -1,6 +1,7 @@
 //! Toggling of grid and overlays
 
 function toggleGrid() {
+    
     if (document.getElementById('toggle_grid').checked) {
         state = 'block';
     } else {
@@ -127,6 +128,8 @@ function outOverlay(overlay) {
 }
 
 function setupJS() {
+    // TODO: Check if this is an image page and if not, exit immediately
+
     toggleGrid();
     toggleTextBlock();
     toggleBlown();
@@ -152,3 +155,4 @@ function setupJS() {
     }
 }
 window.onload=setupJS;
+
