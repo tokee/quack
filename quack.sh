@@ -292,9 +292,11 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
-    if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
+    if [ ".true" == "$TILE" ]; then
+        if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
-        deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+            deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+        fi
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
