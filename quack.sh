@@ -52,6 +52,7 @@ IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
 #   OurScanProject_batch_2013-09-18_page_007.tif
 #   OurScanProject_batch_2013-09-18_page_007.alto.xml
 ALTO_EXT=".alto.xml"
+
 # The image format for the QA image. Possible values are png and jpg.
 # png is recommended if QA should check image quality in detail.
 export IMAGE_DISP_EXT="png"
@@ -60,31 +61,53 @@ export IMAGE_DISP_EXT="png"
 # Note: This does (unfortunately) not set the quality when tiles and
 # jpg has been chosen.
 export IMAGE_DISP_QUALITY="95"
+
 # The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
+
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
-# If true, preview-pages will not be regenerated if the script is executed a
-# second time with the same source and destination.
-SKIP_EXISTING_PREVIEWS=true
+
 # Number of threads used for image processing. Note that histogram generation
 # is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
 THREADS=4
-# If true, thumbnails are generated even if they already exists
+
+# For production it is recommended that all FORCE_ options are set to "false" as
+# it makes iterative updates fast. If quack settings are tweaked, the relevant
+# FORCE_ options should be "true".
+
+# If true, image-pages will be generated even if they already exists.
+FORCE_PAGES=false
+# If true, the main QA-images will be generated even if they already exists.
+FORCE_QAIMAGE=false
+# If true, thumbnails will be generated even if they already exists.
 FORCE_THUMBNAILS=false
+# If true, blown high- and low-light overlays will be generated even if they already exists.
+FORCE_BLOWN=false
+# If true, presentation images will be generated even if they already exists.
+FORCE_PRESENTATION=false
+# If true, histogram images will be generated even if they already exists.
+FORCE_HISTOGRAM=false
+# If true, tile images will be generated even if they already exists.
+# This is only relevant if TILE="true"
+FORCE_TILES=false
+
 # If true, the script attempts to find all alternative versions of the current image
 # in other fulders under source. Suitable for easy switching between alternate scans
 # of the same material.
 RESOLVE_ALTERNATIVES=false
+
 # If the IDNEXT attribute starts with 'ART' it is ignored
 # Used to avoid visually linking everything on the page
 SKIP_NEXT_ART=false
+
 # How much of the image to retain, cropping from center, when calculating
 # histograms. Empty value = no crop. Valid values: 1-100
 # This us usable for generating proper histograms for scans where the border
 # is different from the rest of the image. Artifacts from rotations is an example.
 # Suggested values are 85-95%.
 CROP_PERCENT=""
+
 # If true, tiles are generated for OpenSeadragon. This requires Robert Barta's 
 # deepzoom (see link in README.md) and will generate a lot of 260x260 pixel tiles.
 # If false, a single image will be used with OpenSeadragon. This is a lot heavier
@@ -223,7 +246,10 @@ function makeImages() {
         exit
     fi
 
-    # No matter what, we create the full main presentational image as it
+    if [ "true" == "$FORCE_QAIMAGE" -a -f "$DEST_IMAGE" ]; then
+        rm -rf "$DEST_IMAGE"
+    fi
+    # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
     if [ ! -f $DEST_IMAGE ]; then
         echo " - ${DEST_IMAGE##*/}"
@@ -237,27 +263,42 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
+    if [ "true" == "$FORCE_TILES" -a -f "$TILE_FOLDER" ]; then
+        rm -rf "$TILE_FOLDER"
+    fi
     if [ ! -d "$TILE_FOLDER" ]; then
         echo " - ${TILE_FOLDER##*/} (deepzoom)"
         # TODO: Specify JPEG quality
         deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
-    if [ ! -f $WHITE_IMAGE ]; then
+    if [ "true" == "$FORCE_BLOWN" -a -f "$WHITE_IMAGE" ]; then
+        rm -f "$WHITE_IMAGE"
+    fi
+    if [ ! -f "$WHITE_IMAGE" ]; then
         echo " - ${WHITE_IMAGE##*/}"
         gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#FF0000 -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
+    if [ "true" == "$FORCE_BLOWN" -a -f "$BLACK_IMAGE" ]; then
+        rm -f "$BLACK_IMAGE"
+    fi
     if [ ! -f $BLACK_IMAGE ]; then
         echo " - ${BLACK_IMAGE##*/}"
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
+    if [ "true" == "$FORCE_PRESENTATION" -a -f "$PRESENTATION_IMAGE" ]; then
+        rm -f "$PRESENTATION_IMAGE"
+    fi
     if [ ! -f $PRESENTATION_IMAGE ]; then
         echo " - ${PRESENTATION_IMAGE##*/}"
         $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
     fi
 
+    if [ "true" == "$FORCE_HISTOGRAM" -a -f "$HIST_IMAGE" ]; then
+        rm -f "$HIST_IMAGE"
+    fi
     if [ ! -f $HIST_IMAGE ]; then
         # Remove "-separate -append" to generate a RGB histogram
         # http://www.imagemagick.org/Usage/files/#histogram
@@ -479,7 +520,7 @@ function makePreviewPage() {
     PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
    
-    if [ "true" == "$SKIP_EXISTING_PREVIEWS" -a -e "$P" ]; then
+    if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
     fi
 
