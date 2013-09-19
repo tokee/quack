@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.1 beta - Quality assurance tool for text scanning projects.
+# Quack 1.2 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -77,20 +77,23 @@ THREADS=4
 # FORCE_ options should be "true".
 
 # If true, image-pages will be generated even if they already exists.
-FORCE_PAGES=false
+export FORCE_PAGES=false
 # If true, the main QA-images will be generated even if they already exists.
-FORCE_QAIMAGE=false
+export FORCE_QAIMAGE=false
 # If true, thumbnails will be generated even if they already exists.
-FORCE_THUMBNAILS=false
+export FORCE_THUMBNAILS=false
 # If true, blown high- and low-light overlays will be generated even if they already exists.
-FORCE_BLOWN=false
+# Setting this to true will also set FORCE_BLOWN_THUMBS to true
+export FORCE_BLOWN=false
+# If true, blown high- and low-light overlays for thumbs will be generated even if they already exists.
+export FORCE_BLOWN_THUMBS=false
 # If true, presentation images will be generated even if they already exists.
-FORCE_PRESENTATION=false
+export FORCE_PRESENTATION=false
 # If true, histogram images will be generated even if they already exists.
-FORCE_HISTOGRAM=false
+export FORCE_HISTOGRAM=false
 # If true, tile images will be generated even if they already exists.
 # This is only relevant if TILE="true"
-FORCE_TILES=false
+export FORCE_TILES=false
 
 # If true, the script attempts to find all alternative versions of the current image
 # in other fulders under source. Suitable for easy switching between alternate scans
@@ -122,6 +125,11 @@ if [ -e "quack.settings" ]; then
     source "quack.settings"
 fi
 popd > /dev/null
+
+if [ ".true" == ".$FORCE_BLOWN" ]; then
+    # When we force regeneration of blown, we myst also regenerate the blown thumbs.
+    export FORCE_BLOWN_THUMBS=true
+fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 FOLDER_TEMPLATE="$ROOT/folder_template.html"
@@ -170,7 +178,7 @@ function copyFiles () {
         mkdir -p $DEST
     fi
     cp "${ROOT}/${DRAGON}" "$DEST"
-    cp "${ROOT}/quack.js" "$DEST"
+    cp ${ROOT}/*.js "$DEST"
     cp ${ROOT}/*.css "$DEST"
 }
 
@@ -208,11 +216,33 @@ function makeImageParams() {
     DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
+    THUMB_LINK=${THUMB_IMAGE##*/}
     WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 }
+
+# If force is true and image exists, image is deleted and true returned
+# If force is true and image does not exist, true is returned
+# If force is false and image exists, false is returned
+# If force is false and image does not exists, true is returned
+# Input: force image designation
+# Output: true/false. Use with 'if shouldGenerate true dummy; then'
+shouldGenerate() {
+    local FORCE="$1"
+    local IMG="$2"
+    local DES="$3"
+
+    if [ ".true" == ".$FORCE" -a -e "$IMG" ]; then
+        rm -rf "$IMG"
+    fi
+    if [ ! -e "$IMG" -a "." != ".$DES" ]; then
+        echo " - ${IMG##*/} ($DES)"
+    fi
+    [ ! -e "$IMG" ]
+}
+export -f shouldGenerate
 
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
@@ -236,8 +266,11 @@ function makeImages() {
     local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
+    local THUMB_LINK=${THUMB_IMAGE##*/}
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
+    local THUMB_OVERLAY_WHITE="${DEST_FOLDER}/${BASE}.white.thumb.png"
+    local THUMB_OVERLAY_BLACK="${DEST_FOLDER}/${BASE}.black.thumb.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 
@@ -246,13 +279,9 @@ function makeImages() {
         exit
     fi
 
-    if [ "true" == "$FORCE_QAIMAGE" -a -f "$DEST_IMAGE" ]; then
-        rm -rf "$DEST_IMAGE"
-    fi
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
-    if [ ! -f $DEST_IMAGE ]; then
-        echo " - ${DEST_IMAGE##*/}"
+    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA"; then
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
@@ -263,46 +292,26 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_TILES" -a -f "$TILE_FOLDER" ]; then
-        rm -rf "$TILE_FOLDER"
-    fi
-    if [ "true" == "$TILE" -a ! -d "$TILE_FOLDER" ]; then
-        echo " - ${TILE_FOLDER##*/} (deepzoom)"
+    if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
         deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
     fi
 
-    if [ "true" == "$FORCE_BLOWN" -a -f "$WHITE_IMAGE" ]; then
-        rm -f "$WHITE_IMAGE"
-    fi
-    if [ ! -f "$WHITE_IMAGE" ]; then
-        echo " - ${WHITE_IMAGE##*/}"
+    if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#FF0000 -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_BLOWN" -a -f "$BLACK_IMAGE" ]; then
-        rm -f "$BLACK_IMAGE"
-    fi
-    if [ ! -f $BLACK_IMAGE ]; then
-        echo " - ${BLACK_IMAGE##*/}"
+    if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_PRESENTATION" -a -f "$PRESENTATION_IMAGE" ]; then
-        rm -f "$PRESENTATION_IMAGE"
-    fi
-    if [ ! -f $PRESENTATION_IMAGE ]; then
-        echo " - ${PRESENTATION_IMAGE##*/}"
+    if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
         $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
     fi
 
-    if [ "true" == "$FORCE_HISTOGRAM" -a -f "$HIST_IMAGE" ]; then
-        rm -f "$HIST_IMAGE"
-    fi
-    if [ ! -f $HIST_IMAGE ]; then
+    if shouldGenerate "$FORCE_HISTOGRAM" "$HIST_IMAGE" "histogram"; then
         # Remove "-separate -append" to generate a RGB histogram
         # http://www.imagemagick.org/Usage/files/#histogram
-        echo " - ${HIST_IMAGE##*/}"
         if [ "." == ".$CROP_PERCENT" ]; then
             convert "$CONV" -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
         else
@@ -310,15 +319,24 @@ function makeImages() {
         fi
     fi
 
-    if [ "true" == "$FORCE_THUMBNAILS" -a -f "$THUMB_IMAGE" ]; then
-        rm -f "$THUMB_IMAGE"
-    fi
-    if [ ! -f "$THUMB_IMAGE" ]; then
-        echo " - ${THUMB_IMAGE##*/}"
+    if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
         gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
     fi
 
+    if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_WHITE" "thumb overlay"; then
+        echo " - ${THUMB_OVERLAY_WHITE##*/}"
+        # Note: We use ImageMagick here as older versions of GraphicsMagic does not
+        # handle resizing of alpha-channel PNGs followed by color reduction
+        convert "$WHITE_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_WHITE"
+    fi
+    if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_BLACK" "thumb overlay"; then
+        echo " - ${THUMB_OVERLAY_BLACK##*/}"
+        # Note: We use ImageMagick here as older versions of GraphicsMagic does not
+        # handle resizing of alpha-channel PNGs followed by color reduction
+        convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_BLACK"
+    fi
 }
+export -f makeImages
 
 # Generates overlays for the stated block and updates idnext & idprev
 # altoxml (newlines removed) tag class
@@ -584,7 +602,6 @@ function makePreviewPage() {
       ]"$'\n'
     fi
     IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
-    THUMB_LINK=${THUMB_IMAGE##*/}
     IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
     IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
     IHTML=`template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"`
@@ -655,7 +672,6 @@ function makeIndex() {
 
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
-    export -f makeImages
     echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
@@ -669,7 +685,9 @@ function makeIndex() {
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
             makePreviewPage $UP $PARENT $SRC_FOLDER $DEST_FOLDER $I "$PREV_IMAGE" "$NEXT_IMAGE"
             IMAGES_HTML="${IMAGES_HTML}<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
-            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
+
+            THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
+#            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
             PREV_IMAGE=$I
         done
         IMAGES_HTML="${IMAGES_HTML}</ul>"$'\n'
