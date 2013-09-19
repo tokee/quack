@@ -266,7 +266,7 @@ function makeImages() {
     if [ "true" == "$FORCE_TILES" -a -f "$TILE_FOLDER" ]; then
         rm -rf "$TILE_FOLDER"
     fi
-    if [ ! -d "$TILE_FOLDER" ]; then
+    if [ "true" == "$TILE" -a ! -d "$TILE_FOLDER" ]; then
         echo " - ${TILE_FOLDER##*/} (deepzoom)"
         # TODO: Specify JPEG quality
         deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
