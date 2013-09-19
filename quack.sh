@@ -83,7 +83,10 @@ export FORCE_QAIMAGE=false
 # If true, thumbnails will be generated even if they already exists.
 export FORCE_THUMBNAILS=false
 # If true, blown high- and low-light overlays will be generated even if they already exists.
+# Setting this to true will also set FORCE_BLOWN_THUMBS to true
 export FORCE_BLOWN=false
+# If true, blown high- and low-light overlays for thumbs will be generated even if they already exists.
+export FORCE_BLOWN_THUMBS=false
 # If true, presentation images will be generated even if they already exists.
 export FORCE_PRESENTATION=false
 # If true, histogram images will be generated even if they already exists.
@@ -122,6 +125,11 @@ if [ -e "quack.settings" ]; then
     source "quack.settings"
 fi
 popd > /dev/null
+
+if [ ".true" == ".$FORCE_BLOWN" ]; then
+    # When we force regeneration of blown, we myst also regenerate the blown thumbs.
+    export FORCE_BLOWN_THUMBS=true
+fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
 FOLDER_TEMPLATE="$ROOT/folder_template.html"
@@ -259,6 +267,8 @@ function makeImages() {
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
     local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
+    local THUMB_OVERLAY_WHITE="${DEST_FOLDER}/${BASE}.white.thumb.png"
+    local THUMB_OVERLAY_BLACK="${DEST_FOLDER}/${BASE}.black.thumb.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 
@@ -309,6 +319,19 @@ function makeImages() {
 
     if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
         gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
+    fi
+
+    if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_WHITE" "thumb overlay"; then
+        echo " - ${THUMB_OVERLAY_WHITE##*/}"
+        # Note: We use ImageMagick here as older versions of GraphicsMagic does not
+        # handle resizing of alpha-channel PNGs followed by color reduction
+        convert "$WHITE_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_WHITE"
+    fi
+    if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_BLACK" "thumb overlay"; then
+        echo " - ${THUMB_OVERLAY_BLACK##*/}"
+        # Note: We use ImageMagick here as older versions of GraphicsMagic does not
+        # handle resizing of alpha-channel PNGs followed by color reduction
+        convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_BLACK"
     fi
 
 }
