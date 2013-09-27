@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <!-- Tests performance of multiple, potentially active, OpenSeadragons.
+         No sample data due to immaterial rights, sorry.
+         Adjust "scale_tiles" and "6448" and "9101" to your own tile data.
+    -->
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Dragon Scale</title>
+    <link rel="stylesheet" type="text/css" href="quack.css" />
+    <script src="openseadragon.min.js"></script>
+    <script>
+        var dragons = [];
+        var springTime = 1500; // OpenSeadragon default
+        var triggerTime = 300; // Should be < springTime / dragons.length but beware performance
+        var triggerCount = 0;
+
+        // Add count dragons to the page
+        function add(count) {
+            for (var i = 0 ; i < count ; i++) {
+                // Add div
+                var den = document.getElementById('dragonden');
+                var newDragonDiv = document.createElement('div');
+                newDragonDiv.setAttribute('id', 'dragon' + dragons.length);
+                newDragonDiv.setAttribute('class', 'openseadragon');
+                den.appendChild(newDragonDiv);
+
+                // Assign dragon
+                var dragon = OpenSeadragon({
+                id:             "dragon" + dragons.length,
+                maxZoomLevel:   16,
+                animationTime:  1.5,
+                zoomPerSecond:  1.5,
+                showNavigator:  false,
+                wrapHorizontal: false,
+                tileSources: {
+                    Image: {
+                    xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
+                    Url:      "scale_tiles/",
+                    Format:   "png",
+                    Overlap:  "4",
+                    TileSize: "256",
+                    Size: {
+                        Width:  "6448",
+                        Height: "9101"
+                    }
+                }
+                }
+                });
+                dragons[dragons.length] = dragon;
+            }
+        }
+
+        // Add count dragons to the page
+        function removeD(count) {
+            count = Math.min(count, dragons.length);
+            for (var i = 0 ; i < count ; i++) {
+                var dragonDiv = document.getElementById("dragon" + (dragons.length-1));
+                document.title = dragonDiv;
+                dragonDiv.parentNode.removeChild(dragonDiv);
+                dragons.splice(dragons.length-1, 1);
+            }
+        }
+
+        // Reset to default views
+        function reset() {
+            for (var i = 0 ; i < dragons.length ; i++) {
+                var dragon = dragons[i];
+                dragon.viewport.goHome(true);
+            }
+        }
+
+        function pokeDragon(dragon) {
+            var zoom = Math.random() * 8 + 1;
+            var origo = dragon.viewport.getCenter(false);
+            var x = origo.x;
+            var y = origo.y;
+            dragon.viewport.zoomTo(zoom, new OpenSeadragon.Point(x, y), false);
+            dragon.viewport.panTo(new OpenSeadragon.Point(Math.random(), Math.random()));
+        }
+
+        // Zoom in/out a little bit
+        function motion() {
+            for (var i = 0 ; i < dragons.length ; i++) {
+                pokeDragon(dragons[i]);
+            }
+        }
+
+        function live() {
+            if (document.getElementById('liveCheck').checked) {
+                every = springTime / triggerTime; // what if this is not a whole number?
+                for (var i = triggerCount ; i < dragons.length ; i += every) {
+                    pokeDragon(dragons[i]);
+                }
+                triggerCount++;
+                if (triggerCount >= every) {
+                    triggerCount = 0;
+                }
+            }
+        }
+
+        function init() {
+            add(1);
+            window.setInterval("live()", triggerTime);
+        }
+    </script>
+    <style>
+        .openseadragon {
+           width: 200px;
+           height: 300px;
+           border: 2px solid #8888ff;
+           margin-right: 1em;
+           margin-bottom: 1em;
+           float: left;
+        }
+    </style>
+</head>
+
+<body class="previewpage" onLoad="init();">
+<h1>Dragon Scale</span></h1>
+<p>OpenSeadragon scaling test</p>
+<div class="moreless">
+<input type="button" onClick="removeD(10);" value="-10" />
+<input type="button" onClick="removeD(1);" value="-1" />
+<input type="button" onClick="add(1);" value="+1" />
+<input type="button" onClick="add(10);" value="+10" />
+<input type="button" onClick="motion();" value="poke" />
+<input type="checkbox" id="liveCheck">live</input>
+</div>
+</p>
+
+<div id="dragonden"></div>
+
+</body>
+</html>
