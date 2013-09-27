@@ -4,6 +4,7 @@
     <!-- Tests performance of multiple, potentially active, OpenSeadragons.
          No sample data due to immaterial rights, sorry.
          Adjust "scale_tiles" and "6448" and "9101" to your own tile data.
+         To get a lot of data, duplicate the same tiles by hard-linking.
     -->
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -12,32 +13,24 @@
     <script src="openseadragon.min.js"></script>
     <script>
         var dragons = [];
+        var dormantDragons = [];
+        var maxDragons = 9999;
+        var tileIndex = 0;
+        var maxTileIndex = 199;
         var springTime = 1500; // OpenSeadragon default
         var triggerTime = 300; // Should be < springTime / dragons.length but beware performance
         var triggerCount = 0;
 
-        // Add count dragons to the page
-        function add(count) {
-            for (var i = 0 ; i < count ; i++) {
-                // Add div
-                var den = document.getElementById('dragonden');
-                var newDragonDiv = document.createElement('div');
-                newDragonDiv.setAttribute('id', 'dragon' + dragons.length);
-                newDragonDiv.setAttribute('class', 'openseadragon');
-                den.appendChild(newDragonDiv);
+        function updateCount() {
+            var countSpan = document.getElementById('dragonCount');
+            countSpan.innerHTML = dragons.length == 1 ? "1 dragon" : dragons.length + " dragons";
+        }
 
-                // Assign dragon
-                var dragon = OpenSeadragon({
-                id:             "dragon" + dragons.length,
-                maxZoomLevel:   16,
-                animationTime:  1.5,
-                zoomPerSecond:  1.5,
-                showNavigator:  false,
-                wrapHorizontal: false,
-                tileSources: {
-                    Image: {
+        function getTileSource() {
+            var ts = {
+                Image: {
                     xmlns:    "http://schemas.microsoft.com/deepzoom/2008",
-                    Url:      "scale_tiles/",
+                    Url:      "scale/scale_tiles_" + tileIndex + "/",
                     Format:   "png",
                     Overlap:  "4",
                     TileSize: "256",
@@ -46,21 +39,75 @@
                         Height: "9101"
                     }
                 }
-                }
-                });
-                dragons[dragons.length] = dragon;
             }
-        }
+            if (tileIndex > maxTileIndex) {
+                tileIndex = 0;
+            }
+            return ts;
+        }                                              
+
+        // Wake a dormant dragon
+        function wakeDragon() {
+            // Show div
+            var dragonDiv = document.getElementById("dragon" + (dragons.length));
+            dragonDiv.style.display = 'block';
+
+            // Wake dragon
+            var dragon = dormantDragons.pop();
+            dragon.open(getTileSource());
+            dragons.push(dragon);
+            updateCount();
+       }
+
+        // Add a single dragon to the page
+        function addDragon() {
+            // Add div
+            var den = document.getElementById('dragonDen');
+            var newDragonDiv = document.createElement('div');
+            newDragonDiv.setAttribute('id', 'dragon' + dragons.length);
+            newDragonDiv.setAttribute('class', 'openseadragon');
+            den.appendChild(newDragonDiv);
+
+            // Assign dragon
+            var dragon = OpenSeadragon({
+                id:             "dragon" + dragons.length,
+                maxZoomLevel:   16,
+                animationTime:  1.5,
+                zoomPerSecond:  1.5,
+                showNavigator:  false,
+                wrapHorizontal: false,
+                tileSources: getTileSource()
+            });
+            dragons.push(dragon);
+            updateCount();
+       }
+
+        // Add count dragons to the page
+        function add(count) {
+            var count = Math.min(maxDragons - dragons.length, count);
+            for (var i = 0 ; i < count ; i++) {
+                if (dormantDragons.length > 0) {
+                    wakeDragon();
+                } else {
+                    addDragon();
+                }
+            }
+         }
 
         // Add count dragons to the page
         function removeD(count) {
             count = Math.min(count, dragons.length);
             for (var i = 0 ; i < count ; i++) {
-                var dragonDiv = document.getElementById("dragon" + (dragons.length-1));
-                document.title = dragonDiv;
-                dragonDiv.parentNode.removeChild(dragonDiv);
-                dragons.splice(dragons.length-1, 1);
-            }
+                // First make dragon dormant
+                dragons[dragons.length-1].close();
+                dormantDragons.push(dragons.pop());
+
+                // Then hide the div
+                var dragonDiv = document.getElementById("dragon" + (dragons.length));
+                dragonDiv.style.display = 'none';
+//                dragonDiv.parentNode.removeChild(dragonDiv);
+              }
+            updateCount();
         }
 
         // Reset to default views
@@ -119,7 +166,7 @@
 
 <body class="previewpage" onLoad="init();">
 <h1>Dragon Scale</span></h1>
-<p>OpenSeadragon scaling test</p>
+<p>OpenSeadragon scaling test with <span id="dragonCount">0 dragons</span></p>
 <div class="moreless">
 <input type="button" onClick="removeD(10);" value="-10" />
 <input type="button" onClick="removeD(1);" value="-1" />
@@ -130,7 +177,7 @@
 </div>
 </p>
 
-<div id="dragonden"></div>
+<div id="dragonDen"></div>
 
 </body>
 </html>
