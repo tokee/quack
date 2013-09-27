@@ -4,7 +4,8 @@
     <!-- Tests performance of multiple, potentially active, OpenSeadragons.
          No sample data due to immaterial rights, sorry.
          Adjust "scale_tiles" and "6448" and "9101" to your own tile data.
-         To get a lot of data, duplicate the same tiles by hard-linking.
+         To get a lot of data, duplicate the same tiles by hard-linking:
+         for D in `seq 0 199`; do cp -R -l scale_tiles scale_tiles_$D ; done
     -->
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
