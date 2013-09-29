@@ -15,8 +15,20 @@ MIN_WIDTH=540
 MIN_HEIGHT=1000
 HEADER_HEIGHT=200
 COL_MIN_WIDTH=500
+ROW_MAX_HEIGHT=300
 
 COUNTER=1
+
+# Input width height destfile
+# Output TEXT
+function makeMessage() {
+    local WIDTH=$1
+    local HEIGHT=$2
+    local DEST=$3
+
+    gm convert -size ${WIDTH}x${HEIGHT} canvas:'#666666' ${DEST}
+    TEXT="foo bar"
+}
 
 # Input: filename imagetype width height
 function generate() {
@@ -35,27 +47,42 @@ function generate() {
         exit 2
     fi
 
-    local COLUMNS=`echo "($WIDTH - 2 * $MARGIN) / $COL_MIN_WIDTH" | bc`
+    local COLUMNS=`echo "($WIDTH - $MARGIN) / ($COL_MIN_WIDTH + $MARGIN)" | bc`
     local COLUMN_WIDTH=`echo "($WIDTH - 2 * $MARGIN) / $COLUMNS" | bc`
-    local COLUMN_HEIGHT=`echo "$HEIGHT - 2 * $MARGIN - $HEADER_HEIGHT" | bc`
+    local ROWS=`echo "($HEIGHT - 2 * $MARGIN - $HEADER_HEIGHT) / ($ROW_MAX_HEIGHT + $MARGIN)" | bc`
+    local ROW_HEIGHT=`echo "($HEIGHT - 3 * $MARGIN - $HEADER_HEIGHT) / $ROWS" | bc`
 
-    echo "Generating #${COUNTER} $TYPE and ALTO XML for '$BASE' of ${WIDTH}x${HEIGHT} pixels with $COLUMNS columns of ${COLUMN_WIDTH}x${COLUMN_HEIGHT} pixels"
-    
-    C="-size ${WIDTH}x${HEIGHT} canvas:'#f0f0f0'"
+    echo "Generating #${COUNTER} $TYPE and ALTO XML for '$BASE' of ${WIDTH}x${HEIGHT} pixels with ${COLUMNS}x${ROWS} columns of ${COLUMN_WIDTH}x${ROW_HEIGHT} pixels"
+
+    local CANVAS="canvas.tmp.tif"
+
+    convert -size ${WIDTH}x${HEIGHT} canvas:'#f0f0f0' $CANVAS
+
+#    C="-size ${WIDTH}x${HEIGHT} canvas:'#f0f0f0'"
     # TODO: Add light grey gaussian noise and darker speckles to simulate scanned paper
 #    C="$C +noise Gaussian"
+#    C="$C \"${BASE}.png\""
+#    echo "convert $C"
+#    eval "convert $C"
 
+    X=$MARGIN
+    Y=$MARGIN
     # Generate header
     HEADER="$BASE $COUNTER"
     local HEADER_Y=`echo "$HEIGHT / 2 - $MARGIN - $HEADER_HEIGHT" | bc`
     C="$C -gravity center -font Helvetica -pointsize 150 -fill black -draw \"text 0,-$HEADER_Y '$HEADER'\""
+    Y=`echo "$Y + $HEADER_HEIGHT + $MARGIN" | bc`
+    for COLUMN in `seq 1 $COLUMNS`; do
+        CY=$Y
+        for ROW in `seq $ROWS`; do
+            local TMP_TXT="/tmp/textimg.tmp.tif"
+            makeMessage $COLUMN_WIDTH $ROW_HEIGHT $TMP_IMG
+            echo "Block at $X,$CY"
+            CY=`echo "$CY + $HEADER_HEIGHT + $MARGIN" | bc`
+        done
+        X=`echo "$X + $COLUMN_WIDTH + $MARGIN" | bc`
+    done
 
-    # Add columns
-    
-    
-    C="$C \"${BASE}.png\""
-    echo "convert $C"
-    eval "convert $C"
     
     COUNTER=`echo "$COUNTER + 1" | bc`
 }
