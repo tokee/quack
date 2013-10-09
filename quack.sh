@@ -292,7 +292,7 @@ function makeImages() {
         local CONV="$SRC_IMAGE"
     fi
 
-    if [ ".true" == "$TILE" ]; then
+    if [ ".true" == ".$TILE" ]; then
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
