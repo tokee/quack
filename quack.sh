@@ -53,6 +53,11 @@ IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
 #   OurScanProject_batch_2013-09-18_page_007.alto.xml
 ALTO_EXT=".alto.xml"
 
+# Sometimes the image corresponding to the ALTO has been scaled after ALTO
+# generation. This factor will be multiplied to all ALTO elements. If the
+# image has been scaled to half width & half height, set this to 0.5.
+ALTO_SCALE_FACTOR="1.0"
+
 # The image format for the QA image. Possible values are png and jpg.
 # png is recommended if QA should check image quality in detail.
 export IMAGE_DISP_EXT="png"
@@ -380,12 +385,12 @@ function processElements() {
         local BHPOS=`echo $BTAG | sed 's/.*HPOS=\"\([^"]\+\)".*/\\1/g'`
         local BVPOS=`echo $BTAG | sed 's/.*VPOS=\"\([^"]\+\)".*/\\1/g'`
         
-        local SWIDTH=`echo "scale=6;$BWIDTH/$PWIDTH" | bc | sed 's/^\./0./'`
+        local SWIDTH=`echo "scale=6;$BWIDTH/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
         # TODO: Seems like there is some mismatch going on here with some deliveries
-        local SHEIGHT=`echo "scale=6;$BHEIGHT/$PHEIGHT" | bc | sed 's/^\./0./'`
+        local SHEIGHT=`echo "scale=6;$BHEIGHT/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
 #        SHEIGHT=`echo "scale=6;$BHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
-        local SHPOS=`echo "scale=6;$BHPOS/$PWIDTH" | bc | sed 's/^\./0./'`
-        local SVPOS=`echo "scale=6;$BVPOS/$PHEIGHT" | bc | sed 's/^\./0./'`
+        local SHPOS=`echo "scale=6;$BHPOS/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
+        local SVPOS=`echo "scale=6;$BVPOS/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
 
         # Special handling of TextBlock
         if [ "TextBlock" == "$TAG" ]; then
@@ -451,7 +456,7 @@ function processALTO() {
     ELEMENTS_HTML="${ELEMENTS_HTML}</table>"$'\n'
 
     # Special overlays to show absolute black and absolute white pixels
-    # The 2.0 is a hack as OpenSeaDragon scales with respect to width
+    # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
     OVERLAYS="overlays: ["$'\n'
     OVERLAYS="${OVERLAYS}{id: 'white',"$'\n'
     OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: ${FULL_RELATIVE_HEIGHT},"$'\n'
