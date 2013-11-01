@@ -101,7 +101,7 @@ export FORCE_HISTOGRAM=false
 export FORCE_TILES=false
 
 # If true, the script attempts to find all alternative versions of the current image
-# in other fulders under source. Suitable for easy switching between alternate scans
+# in other folders under source. Suitable for easy switching between alternate scans
 # of the same material.
 RESOLVE_ALTERNATIVES=false
 
