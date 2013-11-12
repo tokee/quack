@@ -294,7 +294,7 @@ function makeImages() {
         # PNG is fairly fast to decode so use that as source
         local CONV="$DEST_IMAGE"
     else
-        local CONV="$SRC_IMAGE"
+        local CONV="$SOURCE_IMAGE"
     fi
 
     if [ ".true" == ".$TILE" ]; then
