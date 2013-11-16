@@ -690,7 +690,7 @@ function makeIndex() {
         IMAGES_HTML="<ul>"$'\n'
         for I in $IMAGES; do
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
-            makePreviewPage $UP $PARENT $SRC_FOLDER $DEST_FOLDER $I "$PREV_IMAGE" "$NEXT_IMAGE"
+            makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
             IMAGES_HTML="${IMAGES_HTML}<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
 
             THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
