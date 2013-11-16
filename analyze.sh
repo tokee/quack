@@ -3,6 +3,8 @@
 #
 # Statistical helper functions for greyscale images.
 #
+# Requirements: ImageMagick's identify and convert
+#
 
 # Input: image
 # Sample: foo.png
@@ -21,9 +23,10 @@ function im_identify() {
     rm "$TMP"
 }
 
-
+# Produces a histogram over greyscale intensities in the given image
 # Input: image height log
 # Sample: foo.jpg 200 true
+# Output: foo.png (256 x height pixels) with the histogram
 function histogram() {
     local SRC="$1"
     local HEIGHT=$2
@@ -106,11 +109,10 @@ function histogram() {
                 echo -n -e \\xff >> $HTMP
             fi
         done
-#        echo "$G $COUNT $PIXELS $HTMP"
+        echo "$G $COUNT $PIXELS"
     done
     convert -rotate 270 $HTMP "$DEST"
     rm $HTMP
-    
 }
 
 #histogram $1 200 false
