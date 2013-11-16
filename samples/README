@@ -1,0 +1,8 @@
+The originating newspaper issue for the sample images is from 1795 and thus
+out of danish copyright. The rights to the digital images as well as the
+corresponding ALTO files has been released by Statsbiblioteket (State and 
+University Library, Denmark).
+
+The sample files are downscaled and strongly compressed to avoid bloating
+the git repository. They should not be seen as representative of production 
+scans. The original scans are 300 DPI equivalent, in lossless JPEG 2000.
