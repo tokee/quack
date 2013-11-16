@@ -13,7 +13,7 @@
 
 ORIGINALS="/mnt/bulk/data/quack_samples"
 COMMAND="-geometry 40%x -level 0,1.0,220 -quality 55 -type Grayscale"
-FROM_TO="AdresseContoirsEfterretninger-1795-06-16-02-0018B,ACE-17950616-0018B AdresseContoirsEfterretninger-1795-06-16-02-0018B,ACE-17950616-0019A AdresseContoirsEfterretninger-1795-06-16-02-0018B,ACE-17950616-0019B"
+FROM_TO="AdresseContoirsEfterretninger-1795-06-16-02-0018B,ACE-17950616-0018B AdresseContoirsEfterretninger-1795-06-16-02-0019A,ACE-17950616-0019A AdresseContoirsEfterretninger-1795-06-16-02-0019B,ACE-17950616-0019B"
 
 # We would like samples from other time periods, but only the 200+ years
 # old ones are currently cleared for distribution.
