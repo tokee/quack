@@ -198,9 +198,9 @@ function template () {
     # We need to escape \, &, / and newline in replacement to avoid sed problems
     # http://stackoverflow.com/questions/407523/escape-a-string-for-sed-search-pattern
     # http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
-    local EREPLACEMENT=`echo "$REPLACEMENT" | sed -e 's/[\\/&]/\\\\&/g' | sed ':a;N;$!ba;s/\\n/\\\\\&br;/g'`
+    ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | awk 1 ORS="\\\\&br;" ; echo "/g" ) | sed -f - -i $TEMPLATE
     # Insert into template, then unescape newlines
-    echo "$TEMPLATE" | sed "s/\${$PATTERN}/$EREPLACEMENT/g" | sed 's/\&br;/\n/g'
+    sed 's/\&br;/\n/g' -i $TEMPLATE
 }
 
 # Creates the bash environment variables corresponding to those used by makeImages
@@ -573,19 +573,20 @@ function makePreviewPage() {
         NAVIGATION="${NAVIGATION} | next"
     fi
 
-    local IHTML=`cat $IMAGE_TEMPLATE`
-    IHTML=`template "$IHTML" "PARENT" "$PARENT"`
+    cp $IMAGE_TEMPLATE $P
+    IHTML=$P
+    template "$IHTML" "PARENT" "$PARENT"
     local DATE=`date "+%Y-%m-%d %H:%M"`
-    IHTML=`template "$IHTML" "DATE" "$DATE"`
-    IHTML=`template "$IHTML" "UP" "$UP"`
-    IHTML=`template "$IHTML" "NAVIGATION" "$NAVIGATION"`
-    IHTML=`template "$IHTML" "BASE" "$BASE"`
-    IHTML=`template "$IHTML" "SOURCE" "$SOURCE_IMAGE"`
-    IHTML=`template "$IHTML" "FULL_RELATIVE_HEIGHT" "$FULL_RELATIVE_HEIGHT"`
+    template "$IHTML" "DATE" "$DATE"
+    template "$IHTML" "UP" "$UP"
+    template "$IHTML" "NAVIGATION" "$NAVIGATION"
+    template "$IHTML" "BASE" "$BASE"
+    template "$IHTML" "SOURCE" "$SOURCE_IMAGE"
+    template "$IHTML" "FULL_RELATIVE_HEIGHT" "$FULL_RELATIVE_HEIGHT"
     EDEST=${DEST_IMAGE##*/}
-    IHTML=`template "$IHTML" "IMAGE" "$EDEST"`
-    IHTML=`template "$IHTML" "IMAGE_WIDTH" "$IMAGE_WIDTH"`
-    IHTML=`template "$IHTML" "IMAGE_HEIGHT" "$IMAGE_HEIGHT"`
+    template "$IHTML" "IMAGE" "$EDEST"
+    template "$IHTML" "IMAGE_WIDTH" "$IMAGE_WIDTH"
+    template "$IHTML" "IMAGE_HEIGHT" "$IMAGE_HEIGHT"
     if [ "true" == "$TILE" ]; then
         TILE_SOURCES="      Image: {\
         xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
@@ -608,31 +609,30 @@ function makePreviewPage() {
         }\
       ]"$'\n'
     fi
-    IHTML=`template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"`
-    IHTML=`template "$IHTML" "THUMB" "$THUMB_LINK"`
-    IHTML=`template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"`
-    IHTML=`template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"`
+    template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"
+    template "$IHTML" "THUMB" "$THUMB_LINK"
+    template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"
+    template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"
     PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
-    IHTML=`template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"`
-    IHTML=`template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"`
-    IHTML=`template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"`
+    template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"
+    template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"
+    template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"
     WHITE_LINK=${WHITE_IMAGE##*/}
-    IHTML=`template "$IHTML" "WHITE" "$WHITE_LINK"`
+    template "$IHTML" "WHITE" "$WHITE_LINK"
     BLACK_LINK=${BLACK_IMAGE##*/}
-    IHTML=`template "$IHTML" "BLACK" "$BLACK_LINK"`
-    IHTML=`template "$IHTML" "OVERLAYS" "$OVERLAYS"`
-    IHTML=`template "$IHTML" "OCR_CONTENT" "$OCR_CONTENT"`
-    IHTML=`template "$IHTML" "IDNEXTS" "$IDNEXTS"`
-    IHTML=`template "$IHTML" "IDPREVS" "$IDPREVS"`
-    IHTML=`template "$IHTML" "ALTO_ELEMENTS_HTML" "$ELEMENTS_HTML"`
+    template "$IHTML" "BLACK" "$BLACK_LINK"
+    template "$IHTML" "OVERLAYS" "$OVERLAYS"
+    template "$IHTML" "OCR_CONTENT" "$OCR_CONTENT"
+    template "$IHTML" "IDNEXTS" "$IDNEXTS"
+    template "$IHTML" "IDPREVS" "$IDPREVS"
+    template "$IHTML" "ALTO_ELEMENTS_HTML" "$ELEMENTS_HTML"
     EHIST=${HIST_IMAGE##*/}
-    IHTML=`template "$IHTML" "HISTOGRAM" "$EHIST"`
-    IHTML=`template "$IHTML" "ALTO" "$ALTO_FILE"`
+    template "$IHTML" "HISTOGRAM" "$EHIST"
+    template "$IHTML" "ALTO" "$ALTO_FILE"
     if [ "true" == "$RESOLVE_ALTERNATIVES" ]; then
         resolveAlternatives "$SRC_FOLDER" "$IMAGE"
-        IHTML=`template "$IHTML" "ALTERNATIVES" "$ALTERNATIVES_HTML"`
+        template "$IHTML" "ALTERNATIVES" "$ALTERNATIVES_HTML"
     fi
-    echo "$IHTML" > $P
  #    echo ""
 
 #    cat $P
@@ -731,16 +731,16 @@ function makeIndex() {
         done
     fi
 
-    local FHTML=`cat $FOLDER_TEMPLATE`
-    FHTML=`template "$FHTML" "UP" "$UP"`
-    FHTML=`template "$FHTML" "PARENT" "$PARENT"`
-    FHTML=`template "$FHTML" "SRC_FOLDER" "$SRC_FOLDER"`
-    FHTML=`template "$FHTML" "DEST_FOLDER" "$DEST_FOLDER"`
-    FHTML=`template "$FHTML" "IMAGES_HTML" "$IMAGES_HTML"`
-    FHTML=`template "$FHTML" "THUMBS_HTML" "$THUMBS_HTML"`
-    FHTML=`template "$FHTML" "SUBFOLDERS_HTML" "$SUBFOLDERS_HTML"`
-    FHTML=`template "$FHTML" "EDITION_HTML" "$EDITION_HTML"`
-    echo "$FHTML" > $PP
+    cp $FOLDER_TEMPLATE $PP
+    FHTML=$PP
+    template "$FHTML" "UP" "$UP"
+    template "$FHTML" "PARENT" "$PARENT"
+    template "$FHTML" "SRC_FOLDER" "$SRC_FOLDER"
+    template "$FHTML" "DEST_FOLDER" "$DEST_FOLDER"
+    template "$FHTML" "IMAGES_HTML" "$IMAGES_HTML"
+    template "$FHTML" "THUMBS_HTML" "$THUMBS_HTML"
+    template "$FHTML" "SUBFOLDERS_HTML" "$SUBFOLDERS_HTML"
+    template "$FHTML" "EDITION_HTML" "$EDITION_HTML"
     
 #    cat $PP | grep -A 10 Images
 
