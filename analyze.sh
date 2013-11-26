@@ -6,21 +6,78 @@
 # Requirements: ImageMagick's identify and convert
 #
 
+# TODO: Move this outside of the script
+ASSUME_GREY=true
+
+# TODO: Accept destination for identify-file as input
+
 # Input: image
 # Sample: foo.png
-# Produces foo.identify is not already existing.
+# Produces foo.identify if not already existing.
+# Output: The name of the identity file
 function im_identify() {
     local SRC="$1"
  
     local IDENTIFY=${SRC%%.*}.identify
     if [ -f "$IDENTIFY" ]; then
+        echo "$IDENTIFY"
         return
     fi
+    if [ "false" == "$ASSUME_GREY" ]; then
     # We do the TIFF-conversion to force greyscale
-    local TMP=`mktemp`.tif
-    convert "$SRC" -colorspace gray "$TMP"
-    identify -verbose "$TMP" > "$IDENTIFY"
-    rm "$TMP"
+        local TMP=`mktemp`.tif
+        convert "$SRC" -colorspace gray "$TMP"
+        identify -verbose "$TMP" > "$IDENTIFY"
+        rm "$TMP"
+    else
+        identify -verbose "$SRC" > "$IDENTIFY"
+    fi
+    echo "$IDENTIFY"
+}
+
+# TODO: Accept destination for grey-stats-file as input
+
+# Input: image
+# Sample: foo.png
+# Produces foo.grey with $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
+# Output: $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
+function grey_stats() {
+    local SRC="$1"
+    if [ ! -f "$SRC" ]; then
+        echo "grey_stats: The file $SRC does not exist in `pwd`"
+        return
+    fi
+
+    local IDENTIFY=$(im_identify "$SRC")
+    local GREY=${SRC%%.*}.grey
+    local INFO=`cat "$IDENTIFY"`
+    local VALUES=`cat "$IDENTIFY" | grep -B 1000 Colormap`
+
+    local SAVEIFS=$IFS
+    IFS=$(echo -en "\n")
+    
+    local UNIQUE=`echo $VALUES | grep "[0-9]\\+: (" | wc -l`
+
+    local FIRST_COUNT=`echo $VALUES | grep "[0-9]\\+: (" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local FIRST_GREY=`echo $VALUES | grep "[0-9]\\+: (" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    
+    local LAST_COUNT=`echo $VALUES | grep "[0-9]\\+: (" | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local LAST_GREY=`echo $VALUES | grep "[0-9]\\+: (" | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    
+    local GEOMETRY=`echo $INFO | grep "Geometry: [0-9]\\+x[0-9]\\+" | grep -o "[0-9]\\+x[0-9]\\+"`
+    local X=`echo $GEOMETRY | grep -o "[0-9]\\+x" | grep -o "[0-9]\\+"`
+    local Y=`echo $GEOMETRY | grep -o "x[0-9]\\+" | grep -o "[0-9]\\+"`
+    local PIXELS=`echo "$X*$Y" | bc`
+    
+    # http://stackoverflow.com/questions/8402181/how-do-i-get-bc1-to-print-the-leading-zero
+    local PERCENT_FIRST=`echo "scale=2;x=$FIRST_COUNT*100/$PIXELS; if(x<1) print 0; x" | bc`
+    local PERCENT_LAST=`echo "scale=2;x=$LAST_COUNT*100/$PIXELS; if(x<1) print 0; x" | bc`
+    
+    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY" > "$GREY"
+
+    IFS=$SAVEIFS
+
+    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY"
 }
 
 # Produces a histogram over greyscale intensities in the given image
@@ -32,8 +89,7 @@ function histogram() {
     local HEIGHT=$2
     local LOG=$3
 
-    im_identify "$SRC"
-    local IDENTIFY=${SRC%%.*}.identify
+    local IDENTIFY=`im_identify "$SRC"`
     local DEST=${SRC%%.*}.histogram.png
     # Convert      
     #   78085: (  0,  0,  0) #000000 black
@@ -102,17 +158,31 @@ function histogram() {
         # /1 due to funky bc scale not being applied if nothing is done
         local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
 
-        for P in `seq 0 $((HEIGHT-1))`; do
-            if [ $P -le $PIXELS ]; then
+        if [ 0 -lt $PIXELS ]; then
+            for P in `seq 0 $PIXELS`; do
                 echo -n -e \\x0 >> $HTMP
-            else 
+            done
+        fi
+        if [ $((HEIGHT-1)) -gt $PIXELS ]; then
+            for P in `seq $((PIXELS+1)) $((HEIGHT-1)) `; do
                 echo -n -e \\xff >> $HTMP
-            fi
-        done
-        echo "$G $COUNT $PIXELS"
+            done
+        fi
+
+#        for P in `seq 0 $((HEIGHT-1))`; do
+#            if [ $P -le $PIXELS ]; then
+#                echo -n -e \\x0 >> $HTMP
+#            else 
+#                echo -n -e \\xff >> $HTMP
+#            fi
+#        done
+#        echo "$G $COUNT $PIXELS"
     done
+    echo "convert -rotate 270 $HTMP $DEST"
     convert -rotate 270 $HTMP "$DEST"
+    ls -l $HTMP
     rm $HTMP
 }
 
-#histogram $1 200 false
+# histogram $1 200 false
+# grey_stats $1
