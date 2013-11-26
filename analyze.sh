@@ -51,7 +51,9 @@ function grey_stats() {
     local IDENTIFY=$(im_identify "$SRC")
     local GREY=${SRC%%.*}.grey
     local INFO=`cat "$IDENTIFY"`
-    local VALUES=`cat "$IDENTIFY" | grep -B 1000 Colormap`
+    # TODO: No good as large images does not produce a Colormap
+    #local VALUES=`cat "$IDENTIFY" | grep -B 1000 Colormap`
+    local VALUES="$INFO"
 
     local SAVEIFS=$IFS
     IFS=$(echo -en "\n")
