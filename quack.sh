@@ -129,6 +129,8 @@ if [ -e "quack.settings" ]; then
     echo "Sourcing user settings from quack.settings"
     source "quack.settings"
 fi
+# functions for generating identify-files and extract greyscale statistics
+source "analyze.sh"
 popd > /dev/null
 
 if [ ".true" == ".$FORCE_BLOWN" ]; then
@@ -513,13 +515,13 @@ function resolveAlternatives() {
 # up parent srcFolder dstFolder image prev_image next_image
 # Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT
 function makePreviewPage() {
-    local UP=$1
-    local PARENT=$2
-    local SRC_FOLDER=$3
-    local DEST_FOLDER=$4
-    local IMAGE=$5
-    local PREV_IMAGE=$6
-    local NEXT_IMAGE=$7
+    local UP="$1"
+    local PARENT="$2"
+    local SRC_FOLDER="$3"
+    local DEST_FOLDER="$4"
+    local IMAGE="$5"
+    local PREV_IMAGE="$6"
+    local NEXT_IMAGE="$7"
 
     local SANS_PATH=${IMAGE##*/}
     BASE=${SANS_PATH%.*}
@@ -631,8 +633,27 @@ function makePreviewPage() {
     template "$IHTML" "ALTO" "$ALTO_FILE"
     if [ "true" == "$RESOLVE_ALTERNATIVES" ]; then
         resolveAlternatives "$SRC_FOLDER" "$IMAGE"
-        template "$IHTML" "ALTERNATIVES" "$ALTERNATIVES_HTML"
+    else
+        local ALTERNATIVES_HTML=""
     fi
+    template "$IHTML" "ALTERNATIVES" "$ALTERNATIVES_HTML"
+    # image stats
+#    grey_stats "$IMAGE"
+    local GREY=`grey_stats "$IMAGE"`
+    # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
+    # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
+    template "$IHTML" "GREY_PIXELS" `echo "$GREY" | cut -d\  -f1`
+    template "$IHTML" "GREY_UNIQUE" `echo "$GREY" | cut -d\  -f2`
+    template "$IHTML" "GREY_COUNT_FIRST" `echo "$GREY" | cut -d\  -f3`
+    template "$IHTML" "GREY_PERCENT_FIRST" `echo "$GREY" | cut -d\  -f4`
+    template "$IHTML" "GREY_FIRST" `echo "$GREY" | cut -d\  -f5`
+    template "$IHTML" "GREY_COUNT_LAST" `echo "$GREY" | cut -d\  -f6`
+    template "$IHTML" "GREY_PERCENT_LAST" `echo "$GREY" | cut -d\  -f7`
+    template "$IHTML" "GREY_LAST" `echo "$GREY" | cut -d\  -f8`
+    
+#    ls -l "$IMAGE"
+#   echo "$GREY"
+    # ***
  #    echo ""
 
 #    cat $P
