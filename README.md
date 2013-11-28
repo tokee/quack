@@ -12,6 +12,8 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
  * Folder overview with thumbnails
  * Histogram, optionally not analyzing the edges of the image
 
+![Quack screenshot 20131127](docs/quack_20131127_8bit.png)
+
 ## Requirements
 
  * A minimum of 2GB free RAM for processing of 30MP scans
@@ -23,18 +25,6 @@ An enhanced [ALTO](http://www.loc.gov/standards/alto/)-viewer for Quality Assura
  * [deepzoom](http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom) (only if tile based display is enabled)
   * Perl (required by deepzoom)
 
-## Potential improvements
-
- * Speed up HTML generation
-  * Reduce the amount of identifys and template rewrites
-  * Make it possible to generate pages in parallel
- * Lower memory requirements by generating histograms without ImageMagick
- * Optional removal of destination files when source files are removed
- * More flexibility and customization (quack was originally developed for internal use at the State and University Library, Denmark)
-  * ALTO files at another location than image files
- * Add image & ALTO sample files
- * Integrate greyscale statistics
-
 ## Verbiage
 
 This is basically a simple bash script that grew to 600+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creating TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
@@ -44,4 +34,4 @@ It can be quite heavy for the browser to display large images with OpenSeadragon
 
 ## Development
 
-Developed by Toke Eskildsen, partly as a personal project, partly as an employee at the State and University Library, Denmark.
+Developed primarily by Toke Eskildsen; partly as a personal project, partly as an employee at the State and University Library, Denmark.
