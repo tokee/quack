@@ -200,7 +200,14 @@ function template () {
     # We need to escape \, &, / and newline in replacement to avoid sed problems
     # http://stackoverflow.com/questions/407523/escape-a-string-for-sed-search-pattern
     # http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
-    ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | awk 1 ORS="\\\\&br;" ; echo "/g" ) | sed -f - -i $TEMPLATE
+
+    if [ "$REPLACEMENT" == "`echo -n \"$REPLACEMENT\" | tr '\\n' '*'`" ]; then
+        # No newlines, especially no trailing ones!
+        ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | sed ':a;N;$!ba;s/\n/\\\&bt;/g' ; echo "/g" ) | sed -f - -i $TEMPLATE
+    else
+        # The awk-version always adds a trailing newline, even when the input has none
+        ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | awk 1 ORS="\\\\&br;" ; echo "/g" ) | sed -f - -i $TEMPLATE
+    fi
     # Insert into template, then unescape newlines
     sed 's/\&br;/\n/g' -i $TEMPLATE
 }
@@ -494,7 +501,7 @@ function resolveAlternatives() {
     local ID=`echo $IMAGE | grep -o "[0-9][0-9][0-9][0-9]-.*"`
     
     if [ "." == ".$ID" ]; then
-        echo "   Unable to extract ID for \"$IMAGE\""
+        echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
         return
     fi
 
