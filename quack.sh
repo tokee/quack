@@ -417,13 +417,37 @@ function processElements() {
     IFS=$SAVEIFS
 }
 
-# Generates overlays
-# src dest altofile
+# Generates JavaScript snippet for black and white overlays
+# Input: src
+# Output: OVERLAYS (not terminated with ']')
+function blackWhite() {
+    local SRC="$1"
+    local IMAGE_WIDTH=$2
+    local IMAGE_HEIGHT=$3
+    local REL_HEIGHT=`echo "scale=2;$IMAGE_HEIGHT/$IMAGE_WIDTH" | bc`
+
+    # Special overlays to show absolute black and absolute white pixels
+    # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
+    OVERLAYS="overlays: ["$'\n'
+    OVERLAYS="${OVERLAYS}{id: 'white',"$'\n'
+    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
+    OVERLAYS="${OVERLAYS}  className: 'whiteoverlay'"$'\n'
+    OVERLAYS="${OVERLAYS}},"$'\n'
+    OVERLAYS="${OVERLAYS}{id: 'black',"$'\n'
+    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
+    OVERLAYS="${OVERLAYS}  className: 'blackoverlay'"$'\n'
+    OVERLAYS="${OVERLAYS}},"$'\n'
+}
+
+# Generates overlayscase 
+# src dest altofile width height
 # Output: ELEMENTS_HTML OVERLAYS OCR_CONTENT IDNEXT_CONTENT FULL_RELATIVE_HEIGHT
 function processALTO() {
-    local SRC=$1
-    local DEST=$2
-    local ALTO_FILE=$3
+    local SRC="$1"
+    local DEST="$2"
+    local ALTO_FILE="$3"
+    local IMAGE_WIDTH=$4
+    local IMAGE_HEIGHT=$5
 #    local WIDTH=$4
 #    local HEIGHT=$5
 
@@ -433,10 +457,13 @@ function processALTO() {
     OCR_CONTENT=""
 
     local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
+    blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
     # TODO: Extract relevant elements from the Alto for display
     if [ ! -f $ALTO ]; then
         # TODO: Better handling of non-existence
             ELEMENTS_HTML="<p class=\"warning\">No ALTO file at $ALTO</p>"$'\n'
+            # Terminate the black/white overlay and return
+            OVERLAYS="${OVERLAYS}]"
         return
     fi
     cp "$ALTO" "$DEST"
@@ -463,18 +490,6 @@ function processALTO() {
         IFS=$SAVEIFS
     done
     ELEMENTS_HTML="${ELEMENTS_HTML}</table>"$'\n'
-
-    # Special overlays to show absolute black and absolute white pixels
-    # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
-    OVERLAYS="overlays: ["$'\n'
-    OVERLAYS="${OVERLAYS}{id: 'white',"$'\n'
-    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: ${FULL_RELATIVE_HEIGHT},"$'\n'
-    OVERLAYS="${OVERLAYS}  className: 'whiteoverlay'"$'\n'
-    OVERLAYS="${OVERLAYS}},"$'\n'
-    OVERLAYS="${OVERLAYS}{id: 'black',"$'\n'
-    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: ${FULL_RELATIVE_HEIGHT},"$'\n'
-    OVERLAYS="${OVERLAYS}  className: 'blackoverlay'"$'\n'
-    OVERLAYS="${OVERLAYS}},"$'\n'
 
     OCR_CONTENT=""
     IDNEXTS=""
@@ -561,7 +576,7 @@ function makePreviewPage() {
     echo " - ${P##*/}"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"
-    processALTO "$SRC_FOLDER" "$DEST_FOLDER" "$ALTO_FILE"
+    processALTO "$SRC_FOLDER" "$DEST_FOLDER" "$ALTO_FILE" $IMAGE_WIDTH $IMAGE_HEIGHT
 # $IMAGE_WIDTH $IMAGE_HEIGHT
 
     local NAVIGATION=""
