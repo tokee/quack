@@ -15,17 +15,9 @@ ocrs["BLOCK4"] = "Fruentimmerffroeder Christian Faffrup doer vaa Hiornet afStind
 
 
 
+    blackoverlayurl = "ACE-17950616-0019A.black.png";
+    whiteoverlayurl = "ACE-17950616-0019A.white.png";
     </script>
-    <style>
-      .whiteoverlay {
-        background: url(ACE-17950616-0019A.white.png);
-        background-size: 100% auto;
-      }
-      .blackoverlay {
-        background: url(ACE-17950616-0019A.black.png);
-        background-size: 100% auto;
-      }
-    </style>
 </head>
 
 <body class="previewpage">
@@ -36,9 +28,9 @@ ocrs["BLOCK4"] = "Fruentimmerffroeder Christian Faffrup doer vaa Hiornet afStind
 
 <p class="histogram"><img src= "ACE-17950616-0019A.histogram.png" width="256" height="200" alt="histogram"/></p>
 <p class="greystats">
-(0,0,0): 7.49%<br/>
-(255,255,255): 0.02%<br/>
-Unique greyscale values: 512
+(0,0,0): 7.18%<br/>
+(253,253,253): 0.04%<br/>
+Unique greyscale values: 252
 <p><input type="checkbox" id="toggle_grid" onClick="toggleGrid();">Grid</input></p>
 <p><input type="checkbox" id="toggle_textblock" checked="checked" onClick="toggleTextBlock();">TextBlocks</input></p>
 <p><input type="checkbox" id="toggle_blown" onClick="toggleBlown();">Black/white</input></p>
@@ -102,7 +94,7 @@ Unique greyscale values: 512
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-            Image: {        xmlns:    "http://schemas.microsoft.com/deepzoom/2008",        Url:      "ACE-17950616-0019A_files/",        Format:   "png",        Overlap:  "4",        TileSize: "256",        Size: {          Width:  "941",          Height: "1155"        }      }
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0019A.png',          width:  941,          height: 1155        }      ]
 
     },
     overlays: [
@@ -139,7 +131,7 @@ Unique greyscale values: 512
 <p>Parent folder: <a href="index.html"></a></p>
 <p>Source: /home/te/projects/quack/samples/ACE-17950616-0019A.jpg</p>
 <p>Direct: <a href="ACE-17950616-0019A.png">ACE-17950616-0019A.png</a></p>
-<p>Generated: 2013-11-29 11:13</p>
+<p>Generated: 2013-11-29 18:53</p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
@@ -168,9 +160,9 @@ Unique greyscale values: 512
       type: 'legacy-image-pyramid',
       levels:[
         {
-          url: 'ACE-17950616-0019A.presentation.jpg',
-          width:  471,
-          height: 578
+          url: '',
+          width:  0,
+          height: 0
         },
       ]
     }});

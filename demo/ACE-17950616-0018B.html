@@ -37,17 +37,9 @@ prevs["ART4-2"] = "ART4-1";
 prevs["ART4-3"] = "ART4-2";
 prevs["ART5-2"] = "ART5-1";
 
+    blackoverlayurl = "ACE-17950616-0018B.black.png";
+    whiteoverlayurl = "ACE-17950616-0018B.white.png";
     </script>
-    <style>
-      .whiteoverlay {
-        background: url(ACE-17950616-0018B.white.png);
-        background-size: 100% auto;
-      }
-      .blackoverlay {
-        background: url(ACE-17950616-0018B.black.png);
-        background-size: 100% auto;
-      }
-    </style>
 </head>
 
 <body class="previewpage">
@@ -124,7 +116,7 @@ Unique greyscale values: 512
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-            Image: {        xmlns:    "http://schemas.microsoft.com/deepzoom/2008",        Url:      "ACE-17950616-0018B_files/",        Format:   "png",        Overlap:  "4",        TileSize: "256",        Size: {          Width:  "915",          Height: "1093"        }      }
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0018B.png',          width:  915,          height: 1093        }      ]
 
     },
     overlays: [
@@ -193,7 +185,7 @@ Unique greyscale values: 512
 <p>Parent folder: <a href="index.html"></a></p>
 <p>Source: /home/te/projects/quack/samples/ACE-17950616-0018B.jpg</p>
 <p>Direct: <a href="ACE-17950616-0018B.png">ACE-17950616-0018B.png</a></p>
-<p>Generated: 2013-11-29 11:13</p>
+<p>Generated: 2013-11-29 18:53</p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
@@ -222,9 +214,9 @@ Unique greyscale values: 512
       type: 'legacy-image-pyramid',
       levels:[
         {
-          url: 'ACE-17950616-0018B.presentation.jpg',
-          width:  458,
-          height: 547
+          url: '',
+          width:  0,
+          height: 0
         },
       ]
     }});

@@ -13,17 +13,9 @@ ocrs["BLOCK6"] = "Formedelst den store ulykkelige IldSvaabe er Zn^eerkam« meret
 
 
 
+    blackoverlayurl = "ACE-17950616-0019B.black.png";
+    whiteoverlayurl = "ACE-17950616-0019B.white.png";
     </script>
-    <style>
-      .whiteoverlay {
-        background: url(ACE-17950616-0019B.white.png);
-        background-size: 100% auto;
-      }
-      .blackoverlay {
-        background: url(ACE-17950616-0019B.black.png);
-        background-size: 100% auto;
-      }
-    </style>
 </head>
 
 <body class="previewpage">
@@ -100,7 +92,7 @@ Unique greyscale values: 512
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-            Image: {        xmlns:    "http://schemas.microsoft.com/deepzoom/2008",        Url:      "ACE-17950616-0019B_files/",        Format:   "png",        Overlap:  "4",        TileSize: "256",        Size: {          Width:  "909",          Height: "1075"        }      }
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0019B.png',          width:  909,          height: 1075        }      ]
 
     },
     overlays: [
@@ -129,7 +121,7 @@ Unique greyscale values: 512
 <p>Parent folder: <a href="index.html"></a></p>
 <p>Source: /home/te/projects/quack/samples/ACE-17950616-0019B.jpg</p>
 <p>Direct: <a href="ACE-17950616-0019B.png">ACE-17950616-0019B.png</a></p>
-<p>Generated: 2013-11-29 11:13</p>
+<p>Generated: 2013-11-29 18:53</p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
@@ -158,9 +150,9 @@ Unique greyscale values: 512
       type: 'legacy-image-pyramid',
       levels:[
         {
-          url: 'ACE-17950616-0019B.presentation.jpg',
-          width:  455,
-          height: 538
+          url: '',
+          width:  0,
+          height: 0
         },
       ]
     }});
