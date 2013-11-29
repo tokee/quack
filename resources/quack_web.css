@@ -1,0 +1,63 @@
+/* Basics */
+body {
+	color: #000;
+	background: none #F5DEB3;
+	font-family: verdana, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 { margin-bottom: 0.2em; }
+h1						 	{ color: #32611F }
+h2, h3, h4, h5, h6 	{ color: #1F3D14; }
+p 							{ margin-top: 0px; }
+
+ul 	{ margin-top: 0px; }
+code 	{ color: #900; }
+q 		{ font-style: italic; }
+
+a:link 		{ color: #33f; }
+a:visited 	{ color: #808; }
+a:active 	{ color: #f00; }
+
+
+/* http://www.saila.com/usage/acronym/ */
+abbr.init 	{speak : spell-out;}
+abbr.trunc 	{ } /* speak : normal; */
+
+spam.tm {
+	font-size: xx-small;
+	vertical-align: super;
+}
+/* Signature */
+.signature {
+	font-size: smaller;
+	text-align: right;
+	clear: both;
+}
+p.signature a 	{ font-size: smaller ; }
+.signature img { float: right; border: none; }
+
+/* Blocks */
+blockquote {
+	font-style: italic;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #630;
+	color: #000;
+	background: none #ff9;
+	padding: 2px 5px 2px 4px;
+}
+blockquote em { font-style: normal; }
+pre {
+	background: none #ffc;
+	border-style: solid;
+	border-width: 1px;
+	white-space: pre;
+	color: #900;
+	border-color: #000;
+	padding: 2px 5px 2px 4px;
+}
+
+.screenshot {
+    width: 300px;
+    float: right;
+    margin-left: 2em;
+}
