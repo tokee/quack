@@ -137,8 +137,8 @@ ul.alternatives li + li:before {
     border: 1px dotted grey;
 }
 
-.whiteoverlay {
-    background-size: 100% 100%;
+.whiteoverlay, .blackoverlay {
+    background-size: 100% auto;
     pointer-events: none;
 }
 

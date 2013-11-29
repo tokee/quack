@@ -36,10 +36,16 @@ function toggleBlown() {
     
     var content = document.getElementsByClassName('whiteoverlay');
     for (var i = 0 ; i < content.length ; i++) {
+        if (content[i].style.backgroundImage == '' && state == 'block') {
+            content[i].style.backgroundImage = "url('" + whiteoverlayurl + "')";
+        }
         content[i].style.display = state;
     }
     var content = document.getElementsByClassName('blackoverlay');
     for (var i = 0 ; i < content.length ; i++) {
+        if (content[i].style.backgroundImage == '' && state == 'block') {
+            content[i].style.backgroundImage = "url('" + blackoverlayurl + "')";
+        }
         content[i].style.display = state;
     }
 }

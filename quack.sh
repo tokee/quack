@@ -127,7 +127,13 @@ TILE="false"
 # downscaled, levelled, sharpened and JPEG'ed.
 PRESENTATION="true"
 
+# Overlay colors for indicating burned out high- and low-lights
+export OVERLAY_BLACK=3399FF
+export OVERLAY_WHITE=FFFF00
+
 # End default settings. User-supplied overrides will be loaded from quack.settings
+
+
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
@@ -319,11 +325,11 @@ function makeImages() {
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#FF0000 -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
+        gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#$OVERLAY_WHITE -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
+        gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
     if [ ".true" == ".$PRESENTATION" ]; then
@@ -653,8 +659,8 @@ function makePreviewPage() {
         template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"
     else
         template "$IHTML" "PRESENTATION" ""
-        template "$IHTML" "PRESENTATION_WIDTH" ""
-        template "$IHTML" "PRESENTATION_HEIGHT" ""
+        template "$IHTML" "PRESENTATION_WIDTH" "0"
+        template "$IHTML" "PRESENTATION_HEIGHT" "0"
     fi
     WHITE_LINK=${WHITE_IMAGE##*/}
     template "$IHTML" "WHITE" "$WHITE_LINK"
