@@ -122,6 +122,11 @@ CROP_PERCENT=""
 # on the browser but avoids the size and file-count overhead of the tiles.
 TILE="false"
 
+# If true, a secondary view of the scans will be inserted into the page.
+# The view represents an end-user version of the scan. This will often be 
+# downscaled, levelled, sharpened and JPEG'ed.
+PRESENTATION="true"
+
 # End default settings. User-supplied overrides will be loaded from quack.settings
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
@@ -321,8 +326,10 @@ function makeImages() {
         gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#0000FF -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
-    if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
-        $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
+    if [ ".true" == ".$PRESENTATION" ]; then
+        if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
+            $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
+        fi
     fi
 
     if shouldGenerate "$FORCE_HISTOGRAM" "$HIST_IMAGE" "histogram"; then
@@ -565,9 +572,11 @@ function makePreviewPage() {
     local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
-    local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
-    PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
-    PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    if [ ".true" == ".$PRESENTATION" ]; then
+        local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
+        PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
+        PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    fi
    
     if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
@@ -637,10 +646,16 @@ function makePreviewPage() {
     template "$IHTML" "THUMB" "$THUMB_LINK"
     template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"
     template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"
-    PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
-    template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"
-    template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"
-    template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"
+    if [ ".true" == ".$PRESENTATION" ]; then
+        PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
+        template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"
+        template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"
+        template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"
+    else
+        template "$IHTML" "PRESENTATION" ""
+        template "$IHTML" "PRESENTATION_WIDTH" ""
+        template "$IHTML" "PRESENTATION_HEIGHT" ""
+    fi
     WHITE_LINK=${WHITE_IMAGE##*/}
     template "$IHTML" "WHITE" "$WHITE_LINK"
     BLACK_LINK=${BLACK_IMAGE##*/}
