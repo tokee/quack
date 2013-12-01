@@ -212,6 +212,7 @@ function ctemplate() {
 }
 
 # template pattern replacement
+# Deprecated in favor of ctemplate due to better speed in ctemplate
 function template () {
     local TEMPLATE="$1"
     local PATTERN="$2"
@@ -793,20 +794,9 @@ function makeIndex() {
         done
     fi
 
-    cp $FOLDER_TEMPLATE $PP
-    FHTML=$PP
-    template "$FHTML" "UP" "$UP"
-    template "$FHTML" "PARENT" "$PARENT"
-    template "$FHTML" "SRC_FOLDER" "$SRC_FOLDER"
-    template "$FHTML" "DEST_FOLDER" "$DEST_FOLDER"
-    template "$FHTML" "IMAGES_HTML" "$IMAGES_HTML"
-    template "$FHTML" "THUMBS_HTML" "$THUMBS_HTML"
-    template "$FHTML" "SUBFOLDERS_HTML" "$SUBFOLDERS_HTML"
-    template "$FHTML" "EDITION_HTML" "$EDITION_HTML"
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML
+    ctemplate $FOLDER_TEMPLATE > $PP
     
-#    cat $PP | grep -A 10 Images
-
-
     # Generate pages for sub folders
     # We do this at the end to avoid overriding of variables
     for F in $SUBS; do
