@@ -125,7 +125,7 @@ TILE="false"
 # If true, a secondary view of the scans will be inserted into the page.
 # The view represents an end-user version of the scan. This will often be 
 # downscaled, levelled, sharpened and JPEG'ed.
-PRESENTATION="true"
+export PRESENTATION="true"
 
 # Overlay colors for indicating burned out high- and low-lights
 export OVERLAY_BLACK=3399FF
@@ -346,6 +346,7 @@ function makeImages() {
 
     if [ ".true" == ".$PRESENTATION" ]; then
         if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
+            echo "Should generate"
             $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
         fi
     fi
@@ -590,6 +591,7 @@ function makePreviewPage() {
     local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+
     if [ ".true" == ".$PRESENTATION" ]; then
         local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
         PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
@@ -680,6 +682,7 @@ function makePreviewPage() {
     # image stats
 #    grey_stats "$IMAGE"
     local GREY=`grey_stats "$IMAGE"`
+
     # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
     # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
     GREY_PIXELS=`echo "$GREY" | cut -d\  -f1`
