@@ -540,8 +540,9 @@ function resolveAlternatives() {
     local SRC_FOLDER=$1
     local IMAGE=$2
     local FULL="${SRC_FOLDER}/${IMAGE}"
-    local ID=`echo $IMAGE | grep -o "[0-9][0-9][0-9][0-9]-.*"`
-    
+#    local ID=`echo $IMAGE | grep -o "[0-9][0-9][0-9][0-9]-.*"`
+    local ID="${IMAGE%.*}"
+
     if [ "." == ".$ID" ]; then
         echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
         return
