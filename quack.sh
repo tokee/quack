@@ -133,11 +133,22 @@ export OVERLAY_WHITE=FFFF00
 
 # Snippets are inserted verbatim at the top of the folder and the image pages.
 # Use them for specifying things like delivery date or provider notes.
+# Note that these snippet can be overridden on a per-folder and per-image basis
+# by creating special files in the source tree (see SPECIFIC_FOLDER_SNIPPET and
+# SPECIFIC_IMAGE_SNIPPET_EXTENSION below).
 export SNIPPET_FOLDER=""
 export SNIPPET_IMAGE=""
 
 
 # End default settings. User-supplied overrides will be loaded from quack.settings
+
+# If present in a source-folder, the content of the folder will be inserted into
+# the generated folder HTML file.
+SPECIFIC_FOLDER_SNIPPET="folder.snippet"
+
+# If a file with image basename + this extension is encountered, the content will
+# be inserted into the generated image HTML file.
+SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
 
 
 pushd `dirname $0` > /dev/null
@@ -590,6 +601,14 @@ function makePreviewPage() {
     BASE=${SANS_PATH%.*}
     P="${DEST_FOLDER}/${BASE}.html"
 
+    local SSNIP="${BASE}${SPECIFIC_IMAGE_SNIPPET_EXTENSION}"
+
+    if [ -f $SSNIP ]; then
+        SNIPPET=`cat $SSNIP`
+    else
+        SNIPPET="$SNIPPET_FOLDER"
+    fi
+
     # Used by function caller
     PAGE_LINK="${BASE}.html"
 
@@ -742,6 +761,11 @@ function makeIndex() {
         exit
     fi
     pushd $SRC_FOLDER > /dev/null
+    if [ -f $SPECIFIC_FOLDER_SNIPPET ]; then
+        SNIPPET=`cat $SPECIFIC_FOLDER_SNIPPET`
+    else
+        SNIPPET="$SNIPPET_FOLDER"
+    fi
     local SRC_FOLDER=`pwd`
     popd > /dev/null
     echo "Processing $SRC_FOLDER"
