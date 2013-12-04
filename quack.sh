@@ -131,6 +131,12 @@ export PRESENTATION="true"
 export OVERLAY_BLACK=3399FF
 export OVERLAY_WHITE=FFFF00
 
+# Snippets are inserted verbatim at the top of the folder and the image pages.
+# Use them for specifying things like delivery date or provider notes.
+export SNIPPET_FOLDER=""
+export SNIPPET_IMAGE=""
+
+
 # End default settings. User-supplied overrides will be loaded from quack.settings
 
 
