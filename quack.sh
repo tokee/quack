@@ -467,7 +467,7 @@ function blackWhite() {
 
 # Generates overlayscase 
 # src dest altofile width height
-# Output: ELEMENTS_HTML OVERLAYS OCR_CONTENT IDNEXT_CONTENT FULL_RELATIVE_HEIGHT
+# Output: ELEMENTS_HTML OVERLAYS OCR_CONTENT IDNEXT_CONTENT FULL_RELATIVE_HEIGHT ACCURACY
 function processALTO() {
     local SRC="$1"
     local DEST="$2"
@@ -499,6 +499,7 @@ function processALTO() {
     local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
     local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
     local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo $PTAG | sed 's/.*ACCURACY=\"\([^"]\+\)".*/\\1/g'`
 
     FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
     # TODO: Ponder how relative positioning works and why this hack is necessary
