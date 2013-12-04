@@ -143,12 +143,20 @@ export SNIPPET_IMAGE=""
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
-    echo "Sourcing user settings from quack.settings"
+    echo "Sourcing user settings from quack.settings in `pwd`"
     source "quack.settings"
 fi
 # functions for generating identify-files and extract greyscale statistics
 source "analyze.sh"
 popd > /dev/null
+
+# Local settings overrides general settings
+if [ -e "quack.settings" ]; then
+    echo "Sourcing user settings from quack.settings in `pwd`"
+    source "quack.settings"
+fi
+
+
 
 if [ ".true" == ".$FORCE_BLOWN" ]; then
     # When we force regeneration of blown, we myst also regenerate the blown thumbs.
