@@ -51,21 +51,25 @@ function grey_stats() {
     local IDENTIFY=$(im_identify "$SRC")
     local GREY=${SRC%%.*}.grey
     local INFO=`cat "$IDENTIFY"`
-    # TODO: No good as large images does not produce a Colormap
+    # TODO: No good as the histogram data might be much less than 256
     local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
+    local RAW_VALUES=`echo "$VALUES" | grep "[0-9]\\+: ("`
 #    local VALUES="$INFO"
 
     local SAVEIFS=$IFS
     IFS=$(echo -en "\n")
     
-    local UNIQUE=`echo $VALUES | grep "[0-9]\\+: (" | wc -l`
+    local UNIQUE=`echo $RAW_VALUES | wc -l`
 
-    local FIRST_COUNT=`echo $VALUES | grep "[0-9]\\+: (" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local FIRST_GREY=`echo $VALUES | grep "[0-9]\\+: (" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    local FIRST_COUNT=`echo $RAW_VALUES | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local FIRST_GREY=`echo $RAW_VALUES | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
     
-    local LAST_COUNT=`echo $VALUES | grep "[0-9]\\+: (" | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local LAST_GREY=`echo $VALUES | grep "[0-9]\\+: (" | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
-    
+    local LAST_COUNT=`echo $RAW_VALUES | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local LAST_GREY=`echo $RAW_VALUES | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+
+    local SPIKE_COUNT=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local SPIKE_GREY=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+
     local GEOMETRY=`echo $INFO | grep "Geometry: [0-9]\\+x[0-9]\\+" | grep -o "[0-9]\\+x[0-9]\\+"`
     local X=`echo $GEOMETRY | grep -o "[0-9]\\+x" | grep -o "[0-9]\\+"`
     local Y=`echo $GEOMETRY | grep -o "x[0-9]\\+" | grep -o "[0-9]\\+"`
@@ -74,12 +78,13 @@ function grey_stats() {
     # http://stackoverflow.com/questions/8402181/how-do-i-get-bc1-to-print-the-leading-zero
     local PERCENT_FIRST=`echo "scale=2;x=$FIRST_COUNT*100/$PIXELS; if(x<1) print 0; x" | bc`
     local PERCENT_LAST=`echo "scale=2;x=$LAST_COUNT*100/$PIXELS; if(x<1) print 0; x" | bc`
+    local SPIKE_PERCENT=`echo "scale=2;x=$SPIKE_COUNT*100/$PIXELS; if(x<1) print 0; x" | bc`
     
     echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY" > "$GREY"
 
     IFS=$SAVEIFS
 
-    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY"
+    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $SPIKE_COUNT $SPIKE_PERCENT $SPIKE_GREY"
 }
 
 # Produces a histogram over greyscale intensities in the given image
