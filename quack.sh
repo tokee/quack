@@ -352,7 +352,6 @@ function makeImages() {
 
     if [ ".true" == ".$PRESENTATION" ]; then
         if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
-            echo "Should generate"
             $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
         fi
     fi
