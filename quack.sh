@@ -151,6 +151,7 @@ SPECIFIC_FOLDER_SNIPPET="folder.snippet"
 SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
 
 
+START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
@@ -162,9 +163,11 @@ source "analyze.sh"
 popd > /dev/null
 
 # Local settings overrides general settings
-if [ -e "quack.settings" ]; then
-    echo "Sourcing user settings from quack.settings in `pwd`"
-    source "quack.settings"
+if [ ! "$START_PATH" == "$ROOT" ]; then
+    if [ -e "quack.settings" ]; then
+        echo "Sourcing user settings from quack.settings in `pwd`"
+        source "quack.settings"
+    fi
 fi
 
 
