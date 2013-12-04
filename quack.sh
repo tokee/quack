@@ -696,7 +696,9 @@ function makePreviewPage() {
     GREY_COUNT_LAST=`echo "$GREY" | cut -d\  -f6`
     GREY_PERCENT_LAST=`echo "$GREY" | cut -d\  -f7`
     GREY_LAST=`echo "$GREY" | cut -d\  -f8`
- 
+    local GREY_ALL_SOURCE=`im_identify $SOURCE_IMAGE`
+    GREY_ALL=`cat "$GREY_ALL_SOURCE" | grep -A 256 Histogram | tail -n 256`
+
     ctemplate $IMAGE_TEMPLATE > $P
    
 #    ls -l "$IMAGE"
