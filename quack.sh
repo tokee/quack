@@ -681,7 +681,8 @@ function makePreviewPage() {
 
     # image stats
 #    grey_stats "$IMAGE"
-    local GREY=`grey_stats "$IMAGE"`
+    # TODO: Use destination if that is lossless and faster to open?
+    local GREY=`grey_stats "$SOURCE_IMAGE"`
 
     # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
     # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
