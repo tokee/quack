@@ -125,7 +125,7 @@ TILE="false"
 # If true, a secondary view of the scans will be inserted into the page.
 # The view represents an end-user version of the scan. This will often be 
 # downscaled, levelled, sharpened and JPEG'ed.
-PRESENTATION="true"
+export PRESENTATION="true"
 
 # Overlay colors for indicating burned out high- and low-lights
 export OVERLAY_BLACK=3399FF
@@ -200,7 +200,19 @@ function copyFiles () {
     cp ${ROOT}/*.css "$DEST"
 }
 
+# http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
+# Input: template-file
+function ctemplate() {
+    TMP="`tempfile`.sh"
+    echo 'cat <<END_OF_TEXT' >  $TMP
+    cat  "$1"                >> $TMP
+    echo 'END_OF_TEXT'       >> $TMP
+    . $TMP
+    rm $TMP
+}
+
 # template pattern replacement
+# Deprecated in favor of ctemplate due to better speed in ctemplate
 function template () {
     local TEMPLATE="$1"
     local PATTERN="$2"
@@ -334,6 +346,7 @@ function makeImages() {
 
     if [ ".true" == ".$PRESENTATION" ]; then
         if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
+            echo "Should generate"
             $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
         fi
     fi
@@ -578,6 +591,7 @@ function makePreviewPage() {
     local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+
     if [ ".true" == ".$PRESENTATION" ]; then
         local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
         PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
@@ -612,20 +626,13 @@ function makePreviewPage() {
         NAVIGATION="${NAVIGATION} | next"
     fi
 
-    cp $IMAGE_TEMPLATE $P
-    IHTML=$P
-    template "$IHTML" "PARENT" "$PARENT"
-    local DATE=`date "+%Y-%m-%d %H:%M"`
-    template "$IHTML" "DATE" "$DATE"
-    template "$IHTML" "UP" "$UP"
-    template "$IHTML" "NAVIGATION" "$NAVIGATION"
-    template "$IHTML" "BASE" "$BASE"
-    template "$IHTML" "SOURCE" "$SOURCE_IMAGE"
-    template "$IHTML" "FULL_RELATIVE_HEIGHT" "$FULL_RELATIVE_HEIGHT"
+
+
+    # PARENT, DATE, UP, NAVIGATION, BASE, SOURCE, FULL_RELATIVE_HEIGHT, EDEST, IMAGE_WIDTH, IMAGE_HEIGHT, TILE_SOURCES, THUMB, THUMB_WIDTH, THUMB_HEIGHT, PRESENTATION, PRESENTATION_WIDTH, PRESENTATION_HEIGHT, WHITE, BLACK, OVERLAYS, OCR_CONTENT, IDNEXTS, IDPREVS, ALTO_ELEMENTS_HTML, HISTOGRAM, ALTO, ALTERNATIVES
+    SOURCE="$SOURCE_IMAGE"
     EDEST=${DEST_IMAGE##*/}
-    template "$IHTML" "IMAGE" "$EDEST"
-    template "$IHTML" "IMAGE_WIDTH" "$IMAGE_WIDTH"
-    template "$IHTML" "IMAGE_HEIGHT" "$IMAGE_HEIGHT"
+    IMAGE="$EDEST"
+
     if [ "true" == "$TILE" ]; then
         TILE_SOURCES="      Image: {\
         xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
@@ -648,52 +655,48 @@ function makePreviewPage() {
         }\
       ]"$'\n'
     fi
-    template "$IHTML" "TILE_SOURCES" "$TILE_SOURCES"
-    template "$IHTML" "THUMB" "$THUMB_LINK"
-    template "$IHTML" "THUMB_WIDTH" "$THUMB_WIDTH"
-    template "$IHTML" "THUMB_HEIGHT" "$THUMB_HEIGHT"
+    THUMB="$THUMB_LINK"
     if [ ".true" == ".$PRESENTATION" ]; then
         PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
-        template "$IHTML" "PRESENTATION" "$PRESENTATION_LINK"
-        template "$IHTML" "PRESENTATION_WIDTH" "$PRESENTATION_WIDTH"
-        template "$IHTML" "PRESENTATION_HEIGHT" "$PRESENTATION_HEIGHT"
     else
-        template "$IHTML" "PRESENTATION" ""
-        template "$IHTML" "PRESENTATION_WIDTH" "0"
-        template "$IHTML" "PRESENTATION_HEIGHT" "0"
+        PRESENTATION_LINK=""
+        PRESENTATION_WIDTH=0
+        PRESENTATION_HEIGHT=0
     fi
     WHITE_LINK=${WHITE_IMAGE##*/}
-    template "$IHTML" "WHITE" "$WHITE_LINK"
+    WHITE="$WHITE_LINK"
     BLACK_LINK=${BLACK_IMAGE##*/}
-    template "$IHTML" "BLACK" "$BLACK_LINK"
-    template "$IHTML" "OVERLAYS" "$OVERLAYS"
-    template "$IHTML" "OCR_CONTENT" "$OCR_CONTENT"
-    template "$IHTML" "IDNEXTS" "$IDNEXTS"
-    template "$IHTML" "IDPREVS" "$IDPREVS"
-    template "$IHTML" "ALTO_ELEMENTS_HTML" "$ELEMENTS_HTML"
+    BLACK="$BLACK_LINK"
+
+    ALTO_ELEMENTS_HTML="$ELEMENTS_HTML"
     EHIST=${HIST_IMAGE##*/}
-    template "$IHTML" "HISTOGRAM" "$EHIST"
-    template "$IHTML" "ALTO" "$ALTO_FILE"
+    HISTOGRAM="$EHIST"
+    ALTO="$ALTO_FILE"
     if [ "true" == "$RESOLVE_ALTERNATIVES" ]; then
         resolveAlternatives "$SRC_FOLDER" "$IMAGE"
     else
         local ALTERNATIVES_HTML=""
     fi
-    template "$IHTML" "ALTERNATIVES" "$ALTERNATIVES_HTML"
+    ALTERNATIVES="$ALTERNATIVES_HTML"
+
     # image stats
 #    grey_stats "$IMAGE"
-    local GREY=`grey_stats "$IMAGE"`
+    # TODO: Use destination if that is lossless and faster to open?
+    local GREY=`grey_stats "$SOURCE_IMAGE"`
+
     # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
     # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
-    template "$IHTML" "GREY_PIXELS" `echo "$GREY" | cut -d\  -f1`
-    template "$IHTML" "GREY_UNIQUE" `echo "$GREY" | cut -d\  -f2`
-    template "$IHTML" "GREY_COUNT_FIRST" `echo "$GREY" | cut -d\  -f3`
-    template "$IHTML" "GREY_PERCENT_FIRST" `echo "$GREY" | cut -d\  -f4`
-    template "$IHTML" "GREY_FIRST" `echo "$GREY" | cut -d\  -f5`
-    template "$IHTML" "GREY_COUNT_LAST" `echo "$GREY" | cut -d\  -f6`
-    template "$IHTML" "GREY_PERCENT_LAST" `echo "$GREY" | cut -d\  -f7`
-    template "$IHTML" "GREY_LAST" `echo "$GREY" | cut -d\  -f8`
-    
+    GREY_PIXELS=`echo "$GREY" | cut -d\  -f1`
+    GREY_UNIQUE=`echo "$GREY" | cut -d\  -f2`
+    GREY_COUNT_FIRST=`echo "$GREY" | cut -d\  -f3`
+    GREY_PERCENT_FIRST=`echo "$GREY" | cut -d\  -f4`
+    GREY_FIRST=`echo "$GREY" | cut -d\  -f5`
+    GREY_COUNT_LAST=`echo "$GREY" | cut -d\  -f6`
+    GREY_PERCENT_LAST=`echo "$GREY" | cut -d\  -f7`
+    GREY_LAST=`echo "$GREY" | cut -d\  -f8`
+ 
+    ctemplate $IMAGE_TEMPLATE > $P
+   
 #    ls -l "$IMAGE"
 #   echo "$GREY"
     # ***
@@ -795,20 +798,9 @@ function makeIndex() {
         done
     fi
 
-    cp $FOLDER_TEMPLATE $PP
-    FHTML=$PP
-    template "$FHTML" "UP" "$UP"
-    template "$FHTML" "PARENT" "$PARENT"
-    template "$FHTML" "SRC_FOLDER" "$SRC_FOLDER"
-    template "$FHTML" "DEST_FOLDER" "$DEST_FOLDER"
-    template "$FHTML" "IMAGES_HTML" "$IMAGES_HTML"
-    template "$FHTML" "THUMBS_HTML" "$THUMBS_HTML"
-    template "$FHTML" "SUBFOLDERS_HTML" "$SUBFOLDERS_HTML"
-    template "$FHTML" "EDITION_HTML" "$EDITION_HTML"
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML
+    ctemplate $FOLDER_TEMPLATE > $PP
     
-#    cat $PP | grep -A 10 Images
-
-
     # Generate pages for sub folders
     # We do this at the end to avoid overriding of variables
     for F in $SUBS; do

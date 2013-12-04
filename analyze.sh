@@ -17,7 +17,7 @@ ASSUME_GREY=true
 # Output: The name of the identity file
 function im_identify() {
     local SRC="$1"
- 
+
     local IDENTIFY=${SRC%%.*}.identify
     if [ -f "$IDENTIFY" ]; then
         echo "$IDENTIFY"
@@ -52,8 +52,8 @@ function grey_stats() {
     local GREY=${SRC%%.*}.grey
     local INFO=`cat "$IDENTIFY"`
     # TODO: No good as large images does not produce a Colormap
-    #local VALUES=`cat "$IDENTIFY" | grep -B 1000 Colormap`
-    local VALUES="$INFO"
+    local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
+#    local VALUES="$INFO"
 
     local SAVEIFS=$IFS
     IFS=$(echo -en "\n")
