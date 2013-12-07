@@ -150,6 +150,9 @@ SPECIFIC_FOLDER_SNIPPET="folder.snippet"
 # be inserted into the generated image HTML file.
 SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
 
+# If no OpenSeadragon is present, the scripts attempts to download this version.
+OSD_ZIP="openseadragon-bin-1.0.0.zip"
+OSD_DIRECT="http://github.com/openseadragon/openseadragon/releases/download/v1.0.0/$OSD_ZIP"
 
 START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
@@ -170,20 +173,18 @@ if [ ! "$START_PATH" == "$ROOT" ]; then
     fi
 fi
 
-
-
 if [ ".true" == ".$FORCE_BLOWN" ]; then
     # When we force regeneration of blown, we myst also regenerate the blown thumbs.
     export FORCE_BLOWN_THUMBS=true
 fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
-FOLDER_TEMPLATE="$ROOT/folder_template.html"
-IMAGE_TEMPLATE="$ROOT/image_template.html"
+FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
+IMAGE_TEMPLATE="$ROOT/web/image_template.html"
 DRAGON="openseadragon.min.js"
 
 function usage() {
-    echo "quack 1.1 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
@@ -211,10 +212,37 @@ if [ "." == ".$DEST" ]; then
     usage
     exit 2
 fi
-if [ ! -f "$ROOT/$DRAGON" ]; then
-    echo "The file $ROOT/$DRAGON does not exist" >&2
-    echo "Please download it at http://openseadragon.github.io/#download" >&2
-    exit
+if [ ! -f "$ROOT/web/$DRAGON" ]; then
+    if [ -f "$ROOT/$DRAGON" ]; then
+        echo "Copying $DRAGON from Quack root to the web folder"
+        cp "$ROOT/$DRAGON" "$ROOT/web/"
+    else
+        echo "The file $ROOT/$DRAGON or $ROOT/web/$DRAGON does not exist" >&2
+        if [ "." == ".`which wget`" -o "." == ".`which unzip`" ]; then
+            echo "Please download it at http://openseadragon.github.io/#download" >&2
+            echo "Tested version is 1.0.0, which can be downloaded from" >&2
+            echo "$OSD_DIRECT" >&2
+            exit
+        else
+            echo "Attempting to download of OpenSeadragon from" >&2
+            echo "$OSD_DIRECT"
+            wget "$OSD_DIRECT" -O "$ROOT/web/$OSD_ZIP"
+            pushd "$ROOT/web" > /dev/null
+            unzip "$ROOT/web/$OSD_ZIP" "openseadragon-bin-1.0.0/openseadragon.min.js"
+            mv "openseadragon-bin-1.0.0/openseadragon.min.js" "$DRAGON"
+            rm -r "openseadragon-bin-1.0.0"
+            popd > /dev/null
+            rm "$ROOT/web/$OSD_ZIP"
+            if [ ! -f "$ROOT/web/$DRAGON" ]; then
+                echo "Automatic OpenSeadragon download and installation failed." >&2
+                echo "Please download it at http://openseadragon.github.io/#download" >&2
+                echo "Tested version is 1.0.0, which can be downloaded from" >&2
+                echo "$OSD_DIRECT" >&2
+                exit 2
+            fi
+            echo "Automatic download and installation of OpenSeadragon successful."
+        fi
+    fi
 fi
 
 # Copy OpenSeadragon and all css-files to destination
@@ -223,9 +251,8 @@ function copyFiles () {
         echo "Creating folder $DEST"
         mkdir -p $DEST
     fi
-    cp "${ROOT}/${DRAGON}" "$DEST"
-    cp ${ROOT}/*.js "$DEST"
-    cp ${ROOT}/*.css "$DEST"
+    cp ${ROOT}/web/*.js "$DEST"
+    cp ${ROOT}/web/*.css "$DEST"
 }
 
 # http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
