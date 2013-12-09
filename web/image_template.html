@@ -119,19 +119,12 @@ ${ALTO_ELEMENTS_HTML}
 <script type="text/javascript">
     presentationDragon = OpenSeadragon({
     id:            "presentation-display",
-    maxZoomLevel: 2,
+    maxZoomLevel: 4,
 
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-      type: 'legacy-image-pyramid',
-      levels:[
-        {
-          url: '${PRESENTATION_LINK}',
-          width:  ${PRESENTATION_WIDTH},
-          height: ${PRESENTATION_HEIGHT}
-        },
-      ]
+      ${PRESENTATION_TILE_SOURCES}
     }});
 </script>
 

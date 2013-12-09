@@ -126,6 +126,9 @@ TILE="false"
 # The view represents an end-user version of the scan. This will often be 
 # downscaled, levelled, sharpened and JPEG'ed.
 export PRESENTATION="true"
+# The image format for the presentation image. Possible values are png and jpg.
+# jpg is recommended as this would normally be the choice for end-user presentation.
+export PRESENTATION_IMAGE_DISP_EXT="jpg"
 
 # Overlay colors for indicating burned out high- and low-lights
 export OVERLAY_BLACK=3399FF
@@ -317,6 +320,7 @@ function makeImageParams() {
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
     ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 }
 
@@ -370,6 +374,7 @@ function makeImages() {
     local THUMB_OVERLAY_BLACK="${DEST_FOLDER}/${BASE}.black.thumb.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    local PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
     local ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 
     if [ ! -f $SOURCE_IMAGE ]; then
@@ -394,6 +399,10 @@ function makeImages() {
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+        fi
+        if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
+        # TODO: Specify JPEG quality
+            deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
         fi
     fi
 
@@ -718,6 +727,21 @@ function makePreviewPage() {
           Height: \"$IMAGE_HEIGHT\"\
         }\
       }"$'\n'
+        if [ ".true" == ".$PRESENTATION" ]; then
+            PRESENTATION_TILE_SOURCES="      Image: {\
+        xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
+        Url:      \"${PRESENTATION_TILE_FOLDER##*/}/\",\
+        Format:   \"$PRESENTATION_IMAGE_DISP_EXT\",\
+        Overlap:  \"4\",\
+        TileSize: \"256\",\
+        Size: {\
+          Width:  \"$PRESENTATION_WIDTH\",\
+          Height: \"$PRESENTATION_HEIGHT\"\
+        }\
+      }"$'\n'
+        else
+            PRESENTATION_TILE_SOURCES=""
+        fi
     else
         TILE_SOURCES="      type: 'legacy-image-pyramid',\
       levels:[\
@@ -727,15 +751,20 @@ function makePreviewPage() {
           height: ${IMAGE_HEIGHT}\
         }\
       ]"$'\n'
+        if [ ".true" == ".$PRESENTATION" ]; then
+            PRESENTATION_TILE_SOURCES="      type: 'legacy-image-pyramid',\
+      levels:[\
+        {\
+          url: '${PRESENTATION_IMAGE##*/}',\
+          width:  ${PRESENTATION_WIDTH},\
+          height: ${PRESENTATION_HEIGHT}\
+        }\
+      ]"$'\n'
+        else
+            PRESENTATION_TILE_SOURCES=""
+        fi
     fi
     THUMB="$THUMB_LINK"
-    if [ ".true" == ".$PRESENTATION" ]; then
-        PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
-    else
-        PRESENTATION_LINK=""
-        PRESENTATION_WIDTH=0
-        PRESENTATION_HEIGHT=0
-    fi
     WHITE_LINK=${WHITE_IMAGE##*/}
     WHITE="$WHITE_LINK"
     BLACK_LINK=${BLACK_IMAGE##*/}
