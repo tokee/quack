@@ -828,11 +828,6 @@ function makeIndex() {
         exit
     fi
     pushd $SRC_FOLDER > /dev/null
-    if [ -f $SPECIFIC_FOLDER_SNIPPET ]; then
-        SNIPPET=`cat $SPECIFIC_FOLDER_SNIPPET`
-    else
-        SNIPPET="$SNIPPET_FOLDER"
-    fi
     local SRC_FOLDER=`pwd`
     popd > /dev/null
     echo "Processing $SRC_FOLDER"
@@ -910,7 +905,15 @@ function makeIndex() {
         done
     fi
 
-    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML
+    pushd $SRC_FOLDER > /dev/null
+    if [ -f $SPECIFIC_FOLDER_SNIPPET ]; then
+        SNIPPET=`cat $SPECIFIC_FOLDER_SNIPPET`
+    else
+        SNIPPET="$SNIPPET_FOLDER"
+    fi
+    popd > /dev/null
+
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
     ctemplate $FOLDER_TEMPLATE > $PP
     
     # Generate pages for sub folders
