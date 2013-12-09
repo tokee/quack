@@ -6,8 +6,11 @@
 # Requirements: ImageMagick's identify and convert
 #
 
-# TODO: Move this outside of the script
-ASSUME_GREY=true
+# If true, input files are assumed to be greyscale.
+# If false, they are converted to greyscale before extracting statistics.
+if [ "." == ".$ASSUME_GREY" ]; then
+    ASSUME_GREY=true
+fi
 
 # TODO: Accept destination for identify-file as input
 
