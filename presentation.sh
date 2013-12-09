@@ -59,5 +59,6 @@ if [ "." == ".$DESTINATION" ]; then
     exit 2
 fi
 
+
 get_commands "$SOURCE"
 gm convert "$SOURCE" $COMMANDS "$DESTINATION"

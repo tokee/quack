@@ -126,6 +126,9 @@ TILE="false"
 # The view represents an end-user version of the scan. This will often be 
 # downscaled, levelled, sharpened and JPEG'ed.
 export PRESENTATION="true"
+# The image format for the presentation image. Possible values are png and jpg.
+# jpg is recommended as this would normally be the choice for end-user presentation.
+export PRESENTATION_IMAGE_DISP_EXT="jpg"
 
 # Overlay colors for indicating burned out high- and low-lights
 export OVERLAY_BLACK=3399FF
@@ -133,13 +136,28 @@ export OVERLAY_WHITE=FFFF00
 
 # Snippets are inserted verbatim at the top of the folder and the image pages.
 # Use them for specifying things like delivery date or provider notes.
+# Note that these snippet can be overridden on a per-folder and per-image basis
+# by creating special files in the source tree (see SPECIFIC_FOLDER_SNIPPET and
+# SPECIFIC_IMAGE_SNIPPET_EXTENSION below).
 export SNIPPET_FOLDER=""
 export SNIPPET_IMAGE=""
 
 
 # End default settings. User-supplied overrides will be loaded from quack.settings
 
+# If present in a source-folder, the content of the folder will be inserted into
+# the generated folder HTML file.
+SPECIFIC_FOLDER_SNIPPET="folder.snippet"
 
+# If a file with image basename + this extension is encountered, the content will
+# be inserted into the generated image HTML file.
+SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
+
+# If no OpenSeadragon is present, the scripts attempts to download this version.
+OSD_ZIP="openseadragon-bin-1.0.0.zip"
+OSD_DIRECT="http://github.com/openseadragon/openseadragon/releases/download/v1.0.0/$OSD_ZIP"
+
+START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
 if [ -e "quack.settings" ]; then
@@ -151,12 +169,12 @@ source "analyze.sh"
 popd > /dev/null
 
 # Local settings overrides general settings
-if [ -e "quack.settings" ]; then
-    echo "Sourcing user settings from quack.settings in `pwd`"
-    source "quack.settings"
+if [ ! "$START_PATH" == "$ROOT" ]; then
+    if [ -e "quack.settings" ]; then
+        echo "Sourcing user settings from quack.settings in `pwd`"
+        source "quack.settings"
+    fi
 fi
-
-
 
 if [ ".true" == ".$FORCE_BLOWN" ]; then
     # When we force regeneration of blown, we myst also regenerate the blown thumbs.
@@ -164,12 +182,16 @@ if [ ".true" == ".$FORCE_BLOWN" ]; then
 fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
-FOLDER_TEMPLATE="$ROOT/folder_template.html"
-IMAGE_TEMPLATE="$ROOT/image_template.html"
+if [ -f "$START_PATH/presentation.sh" ]; then
+    echo "Using presentation.sh located in $START_PATH"
+    PRESENTATION_SCRIPT="$START_PATH/presentation.sh"
+fi
+FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
+IMAGE_TEMPLATE="$ROOT/web/image_template.html"
 DRAGON="openseadragon.min.js"
 
 function usage() {
-    echo "quack 1.1 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
@@ -197,10 +219,37 @@ if [ "." == ".$DEST" ]; then
     usage
     exit 2
 fi
-if [ ! -f "$ROOT/$DRAGON" ]; then
-    echo "The file $ROOT/$DRAGON does not exist" >&2
-    echo "Please download it at http://openseadragon.github.io/#download" >&2
-    exit
+if [ ! -f "$ROOT/web/$DRAGON" ]; then
+    if [ -f "$ROOT/$DRAGON" ]; then
+        echo "Copying $DRAGON from Quack root to the web folder"
+        cp "$ROOT/$DRAGON" "$ROOT/web/"
+    else
+        echo "The file $ROOT/$DRAGON or $ROOT/web/$DRAGON does not exist" >&2
+        if [ "." == ".`which wget`" -o "." == ".`which unzip`" ]; then
+            echo "Please download it at http://openseadragon.github.io/#download" >&2
+            echo "Tested version is 1.0.0, which can be downloaded from" >&2
+            echo "$OSD_DIRECT" >&2
+            exit
+        else
+            echo "Attempting to download of OpenSeadragon from" >&2
+            echo "$OSD_DIRECT"
+            wget "$OSD_DIRECT" -O "$ROOT/web/$OSD_ZIP"
+            pushd "$ROOT/web" > /dev/null
+            unzip "$ROOT/web/$OSD_ZIP" "openseadragon-bin-1.0.0/openseadragon.min.js"
+            mv "openseadragon-bin-1.0.0/openseadragon.min.js" "$DRAGON"
+            rm -r "openseadragon-bin-1.0.0"
+            popd > /dev/null
+            rm "$ROOT/web/$OSD_ZIP"
+            if [ ! -f "$ROOT/web/$DRAGON" ]; then
+                echo "Automatic OpenSeadragon download and installation failed." >&2
+                echo "Please download it at http://openseadragon.github.io/#download" >&2
+                echo "Tested version is 1.0.0, which can be downloaded from" >&2
+                echo "$OSD_DIRECT" >&2
+                exit 2
+            fi
+            echo "Automatic download and installation of OpenSeadragon successful."
+        fi
+    fi
 fi
 
 # Copy OpenSeadragon and all css-files to destination
@@ -209,9 +258,8 @@ function copyFiles () {
         echo "Creating folder $DEST"
         mkdir -p "$DEST"
     fi
-    cp "${ROOT}/${DRAGON}" "$DEST"
-    cp ${ROOT}/*.js "$DEST"
-    cp ${ROOT}/*.css "$DEST"
+    cp ${ROOT}/web/*.js "$DEST"
+    cp ${ROOT}/web/*.css "$DEST"
 }
 
 # http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
@@ -254,9 +302,9 @@ function template () {
 # srcFolder dstFolder image
 # Output: SOURCE_IMAGE DEST_IMAGE HIST_IMAGE THUMB
 function makeImageParams() {
-    local SRC_FOLDER=$1
-    local DEST_FOLDER=$2
-    local IMAGE=$3
+    local SRC_FOLDER="$1"
+    local DEST_FOLDER="$2"
+    local IMAGE="$3"
 
     local SANS_PATH=${IMAGE##*/}
     local BASE=${SANS_PATH%.*}
@@ -272,6 +320,8 @@ function makeImageParams() {
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
+    ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 }
 
 # If force is true and image exists, image is deleted and true returned
@@ -324,6 +374,8 @@ function makeImages() {
     local THUMB_OVERLAY_BLACK="${DEST_FOLDER}/${BASE}.black.thumb.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    local PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
+    local ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 
     if [ ! -f "$SOURCE_IMAGE" ]; then
         echo "The source image $S does not exists" >&2
@@ -347,6 +399,10 @@ function makeImages() {
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+        fi
+        if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
+        # TODO: Specify JPEG quality
+            deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
         fi
     fi
 
@@ -505,14 +561,16 @@ function processALTO() {
             OVERLAYS="${OVERLAYS}]"
         return
     fi
-    cp "$ALTO" "$DEST"
+
+    cp "$ALTO" "$ALTO_DEST"
     # Extract key elements from the ALTO
     local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
 #    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
     local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
     local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
     local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
-    ACCURACY=`echo $PTAG | sed 's/.*ACCURACY=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo $PTAG | sed 's/.*PC=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo "scale=2;$ACCURACY*100" | bc`
 
     FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
     # TODO: Ponder how relative positioning works and why this hack is necessary
@@ -590,6 +648,14 @@ function makePreviewPage() {
     BASE=${SANS_PATH%.*}
     P="${DEST_FOLDER}/${BASE}.html"
 
+    local SSNIP="${BASE}${SPECIFIC_IMAGE_SNIPPET_EXTENSION}"
+
+    if [ -f $SSNIP ]; then
+        SNIPPET=`cat $SSNIP`
+    else
+        SNIPPET="$SNIPPET_FOLDER"
+    fi
+
     # Used by function caller
     PAGE_LINK="${BASE}.html"
 
@@ -661,6 +727,21 @@ function makePreviewPage() {
           Height: \"$IMAGE_HEIGHT\"\
         }\
       }"$'\n'
+        if [ ".true" == ".$PRESENTATION" ]; then
+            PRESENTATION_TILE_SOURCES="      Image: {\
+        xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
+        Url:      \"${PRESENTATION_TILE_FOLDER##*/}/\",\
+        Format:   \"$PRESENTATION_IMAGE_DISP_EXT\",\
+        Overlap:  \"4\",\
+        TileSize: \"256\",\
+        Size: {\
+          Width:  \"$PRESENTATION_WIDTH\",\
+          Height: \"$PRESENTATION_HEIGHT\"\
+        }\
+      }"$'\n'
+        else
+            PRESENTATION_TILE_SOURCES=""
+        fi
     else
         TILE_SOURCES="      type: 'legacy-image-pyramid',\
       levels:[\
@@ -670,15 +751,20 @@ function makePreviewPage() {
           height: ${IMAGE_HEIGHT}\
         }\
       ]"$'\n'
+        if [ ".true" == ".$PRESENTATION" ]; then
+            PRESENTATION_TILE_SOURCES="      type: 'legacy-image-pyramid',\
+      levels:[\
+        {\
+          url: '${PRESENTATION_IMAGE##*/}',\
+          width:  ${PRESENTATION_WIDTH},\
+          height: ${PRESENTATION_HEIGHT}\
+        }\
+      ]"$'\n'
+        else
+            PRESENTATION_TILE_SOURCES=""
+        fi
     fi
     THUMB="$THUMB_LINK"
-    if [ ".true" == ".$PRESENTATION" ]; then
-        PRESENTATION_LINK=${PRESENTATION_IMAGE##*/}
-    else
-        PRESENTATION_LINK=""
-        PRESENTATION_WIDTH=0
-        PRESENTATION_HEIGHT=0
-    fi
     WHITE_LINK=${WHITE_IMAGE##*/}
     WHITE="$WHITE_LINK"
     BLACK_LINK=${BLACK_IMAGE##*/}
@@ -820,7 +906,15 @@ function makeIndex() {
         done
     fi
 
-    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML
+    pushd $SRC_FOLDER > /dev/null
+    if [ -f $SPECIFIC_FOLDER_SNIPPET ]; then
+        SNIPPET=`cat $SPECIFIC_FOLDER_SNIPPET`
+    else
+        SNIPPET="$SNIPPET_FOLDER"
+    fi
+    popd > /dev/null
+
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
     ctemplate $FOLDER_TEMPLATE > $PP
     
     # Generate pages for sub folders

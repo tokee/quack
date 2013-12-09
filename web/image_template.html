@@ -19,7 +19,7 @@ ${IDPREVS}
 <body class="previewpage">
 <h1>Quack <span style="color: #999">${SOURCE_SHORT}</span></h1>
 
-<div class="imagesnippet">${SNIPPET_IMAGE}</div>
+<div class="imagesnippet">${SNIPPET}</div>
 
 <div id="controlpanel" class="control">
 <p class="navigation">${NAVIGATION}</p>
@@ -30,7 +30,7 @@ Darkest ${GREY_FIRST}: ${GREY_PERCENT_FIRST}%<br/>
 Spike ${GREY_SPIKE}: ${GREY_PERCENT_SPIKE}%<br/>
 Lightest ${GREY_LAST}: ${GREY_PERCENT_LAST}%<br/>
 Unique greyscale values: ${GREY_UNIQUE}<br/>
-ALTO-accuracy: ${ACCURACY}%
+ALTO-PC: ${ACCURACY}%
 <p><input type="checkbox" id="toggle_grid" onClick="toggleGrid();">Grid</input></p>
 <p><input type="checkbox" id="toggle_textblock" checked="checked" onClick="toggleTextBlock();">TextBlocks</input></p>
 <p><input type="checkbox" id="toggle_blown" onClick="toggleBlown();">Black/white</input></p>
@@ -119,19 +119,12 @@ ${ALTO_ELEMENTS_HTML}
 <script type="text/javascript">
     presentationDragon = OpenSeadragon({
     id:            "presentation-display",
-    maxZoomLevel: 2,
+    maxZoomLevel: 4,
 
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-      type: 'legacy-image-pyramid',
-      levels:[
-        {
-          url: '${PRESENTATION_LINK}',
-          width:  ${PRESENTATION_WIDTH},
-          height: ${PRESENTATION_HEIGHT}
-        },
-      ]
+      ${PRESENTATION_TILE_SOURCES}
     }});
 </script>
 
@@ -139,6 +132,8 @@ ${ALTO_ELEMENTS_HTML}
 <pre>
 ${GREY_ALL}
 </pre>
+
+<p>Generated `date +"%Y-%m-%d %H:%M"`</p>
 
 </body>
 </html>
