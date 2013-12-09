@@ -179,6 +179,10 @@ if [ ".true" == ".$FORCE_BLOWN" ]; then
 fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
+if [ -f "$START_PATH/presentation.sh" ]; then
+    echo "Using presentation.sh located in $START_PATH"
+    PRESENTATION_SCRIPT="$START_PATH/presentation.sh"
+fi
 FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/web/image_template.html"
 DRAGON="openseadragon.min.js"
