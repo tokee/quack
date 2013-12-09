@@ -186,7 +186,7 @@ if [ "." == ".$SOURCE" ]; then
     usage
     exit 2
 fi
-pushd $SOURCE > /dev/null
+pushd "$SOURCE" > /dev/null
 SOURCE_FULL=`pwd`
 popd > /dev/null
 
@@ -205,9 +205,9 @@ fi
 
 # Copy OpenSeadragon and all css-files to destination
 function copyFiles () {
-    if [ ! -d $DEST ]; then
+    if [ ! -d "$DEST" ]; then
         echo "Creating folder $DEST"
-        mkdir -p $DEST
+        mkdir -p "$DEST"
     fi
     cp "${ROOT}/${DRAGON}" "$DEST"
     cp ${ROOT}/*.js "$DEST"
@@ -298,12 +298,12 @@ export -f shouldGenerate
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
 function makeImages() {
-    local SRC_FOLDER=$1
-    local DEST_FOLDER=$2
-    local IMAGE=$3
-    local CROP_PERCENT=$5
-    local PRESENTATION_SCRIPT=$6
-    local TILE=$7
+    local SRC_FOLDER="$1"
+    local DEST_FOLDER="$2"
+    local IMAGE="$3"
+    local CROP_PERCENT="$5"
+    local PRESENTATION_SCRIPT="$6"
+    local TILE="$7"
 
 #    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
 
@@ -325,7 +325,7 @@ function makeImages() {
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
 
-    if [ ! -f $SOURCE_IMAGE ]; then
+    if [ ! -f "$SOURCE_IMAGE" ]; then
         echo "The source image $S does not exists" >&2
         exit
     fi
@@ -498,7 +498,7 @@ function processALTO() {
     local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
     blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
     # TODO: Extract relevant elements from the Alto for display
-    if [ ! -f $ALTO ]; then
+    if [ ! -f "$ALTO" ]; then
         # TODO: Better handling of non-existence
             ELEMENTS_HTML="<p class=\"warning\">No ALTO file at $ALTO</p>"$'\n'
             # Terminate the black/white overlay and return
@@ -536,7 +536,7 @@ function processALTO() {
     IDPREVS=""
 
     # Remove newlines from the ALTO
-    SANS=`cat $ALTO | sed ':a;N;$!ba;s/\\n/ /g'`
+    SANS=`cat "$ALTO" | sed ':a;N;$!ba;s/\\n/ /g'`
 
     processElements "$SANS" "ComposedBlock" "composed"
     processElements "$SANS" "Illustration" "illustration"
@@ -550,10 +550,10 @@ function processALTO() {
 # src_folder image
 # Output: ALTERNATIVES_HTML
 function resolveAlternatives() {
-    local SRC_FOLDER=$1
-    local IMAGE=$2
+    local SRC_FOLDER="$1"
+    local IMAGE="$2"
     local FULL="${SRC_FOLDER}/${IMAGE}"
-#    local ID=`echo $IMAGE | grep -o "[0-9][0-9][0-9][0-9]-.*"`
+#    local ID=`echo "$IMAGE" | grep -o "[0-9][0-9][0-9][0-9]-.*"`
     local ID="${IMAGE%.*}"
 
     if [ "." == ".$ID" ]; then
@@ -561,11 +561,11 @@ function resolveAlternatives() {
         return
     fi
 
-    pushd $SOURCE_FULL > /dev/null
+    pushd "$SOURCE_FULL" > /dev/null
     ALTERNATIVES_HTML="<ul class=\"alternatives\">"$'\n'
     for A in `find . -name "*${ID}" | sort`; do
         # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
-       local LINK=`echo $A | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
+       local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
        local D="${A%.*}"
        ALTERNATIVES_HTML="${ALTERNATIVES_HTML}<li><a href=\"${UP}${D}.html\">${LINK}</a></li>"$'\n'
     done
@@ -713,7 +713,7 @@ function makePreviewPage() {
     GREY_COUNT_SPIKE=`echo "$GREY" | cut -d\  -f9`
     GREY_PERCENT_SPIKE=`echo "$GREY" | cut -d\  -f10`
     GREY_SPIKE=`echo "$GREY" | cut -d\  -f11`
-    local GREY_ALL_SOURCE=`im_identify $SOURCE_IMAGE`
+    local GREY_ALL_SOURCE=`im_identify "$SOURCE_IMAGE"`
     GREY_ALL=`cat "$GREY_ALL_SOURCE" | grep -A 256 Histogram | tail -n 256`
 
     ctemplate $IMAGE_TEMPLATE > $P
@@ -731,30 +731,30 @@ function makePreviewPage() {
 # Input: up parent srcFolder dstFolder
 #
 function makeIndex() {
-    local UP=$1
-    local PARENT=$2
-    local SRC_FOLDER=$3
-    local DEST_FOLDER=$4
+    local UP="$1"
+    local PARENT="$2"
+    local SRC_FOLDER="$3"
+    local DEST_FOLDER="$4"
 #    echo "Processing level '$PARENT' from $SRC_FOLDER"
 
-    if [ ! -d $SRC_FOLDER ]; then
+    if [ ! -d "$SRC_FOLDER" ]; then
         echo "Unable to locate folder $SRC_FOLDER from `pwd`" >&2
         exit
     fi
-    pushd $SRC_FOLDER > /dev/null
+    pushd "$SRC_FOLDER" > /dev/null
     local SRC_FOLDER=`pwd`
     popd > /dev/null
     echo "Processing $SRC_FOLDER"
 
-    if [ ! -d $DEST_FOLDER ]; then
+    if [ ! -d "$DEST_FOLDER" ]; then
 #        echo "Creating folder $DEST_FOLDER"
-        mkdir -p $DEST_FOLDER
+        mkdir -p "$DEST_FOLDER"
     fi
-    pushd $DEST_FOLDER > /dev/null
+    pushd "$DEST_FOLDER" > /dev/null
     local DEST_FOLDER=`pwd`
     popd > /dev/null
 
-    pushd $SRC_FOLDER > /dev/null
+    pushd "$SRC_FOLDER" > /dev/null
     local PP="${DEST_FOLDER}/index.html"
 
     if [ "." == ".$PARENT" ]; then
@@ -788,12 +788,13 @@ function makeIndex() {
         IMAGES_HTML="${IMAGES_HTML}</ul>"$'\n'
     fi
 
-    local SUBS=`ls $SRC_FOLDER`
+    local SUBS=`ls "$SRC_FOLDER"`
     if [ "." == ".$S
     UBS" ]; then
         SUBFOLDERS_HTML="<p>No subfolders</p>"$'\n'
     else
         SUBFOLDERS_HTML="<ul>"$'\n'
+        # TODO: Make the iterator handle spaces
         for F in $SUBS; do
             if [ -d $F ]; then
                 SUBFOLDERS_HTML="${SUBFOLDERS_HTML}<li><a href=\"$F/index.html\">$F</a></li>"$'\n'
@@ -835,6 +836,6 @@ function makeIndex() {
 
 echo "Quack starting at `date`"
 copyFiles
-makeIndex "" "" $SOURCE $DEST
+makeIndex "" "" "$SOURCE" "$DEST"
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
