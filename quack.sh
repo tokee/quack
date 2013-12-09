@@ -295,9 +295,9 @@ function template () {
 # srcFolder dstFolder image
 # Output: SOURCE_IMAGE DEST_IMAGE HIST_IMAGE THUMB
 function makeImageParams() {
-    local SRC_FOLDER=$1
-    local DEST_FOLDER=$2
-    local IMAGE=$3
+    local SRC_FOLDER="$1"
+    local DEST_FOLDER="$2"
+    local IMAGE="$3"
 
     local SANS_PATH=${IMAGE##*/}
     local BASE=${SANS_PATH%.*}
@@ -313,6 +313,7 @@ function makeImageParams() {
     BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
     PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 }
 
 # If force is true and image exists, image is deleted and true returned
@@ -365,6 +366,7 @@ function makeImages() {
     local THUMB_OVERLAY_BLACK="${DEST_FOLDER}/${BASE}.black.thumb.png"
     local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
     local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    local ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 
     if [ ! -f $SOURCE_IMAGE ]; then
         echo "The source image $S does not exists" >&2
@@ -546,14 +548,16 @@ function processALTO() {
             OVERLAYS="${OVERLAYS}]"
         return
     fi
-    cp "$ALTO" "$DEST"
+
+    cp "$ALTO" "$ALTO_DEST"
     # Extract key elements from the ALTO
     local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
 #    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
     local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
     local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
     local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
-    ACCURACY=`echo $PTAG | sed 's/.*ACCURACY=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo $PTAG | sed 's/.*PC=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo "scale=2;$ACCURACY*100" | bc`
 
     FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
     # TODO: Ponder how relative positioning works and why this hack is necessary
