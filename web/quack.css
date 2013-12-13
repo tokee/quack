@@ -116,6 +116,13 @@ div.openseadragon-canvas canvas {
     width: 1px;
 }
 
+.searchresultbox {
+    opacity:    0.8;
+    filter:     alpha(opacity=40);
+    border:     4px solid #3333DE;
+    color:      #3333DE;
+    background-color: transparent;
+}
 .highlight {
     opacity:    0.4;
     filter:     alpha(opacity=40);

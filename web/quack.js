@@ -133,13 +133,74 @@ function outOverlay(overlay) {
     removeBackward(overlay, "next");
 }
 
+// URL parameter parsing
+// http://stackoverflow.com/questions/979975/how-to-get-the-value-from-url-parameter
+function getRes() {
+    var input = window.location.href;
+//    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");  
+//    var regexS = "/[\\?&]" + name + "=([^&#]*)/g";  
+//    var regex = new RegExp( regexS );  
+    var regex = /[\\?&]box=([^&#]*)/g;  
+    var results = [];
+
+    var tokens;
+    while (tokens = regex.exec(input)) { 
+        results.push(decodeURIComponent(tokens[1]));
+//        console.log('Pushing ' + decodeURIComponent(tokens[1]));
+    }
+    return results;
+}
+
+
+function createDiv(id, className, content) {
+    var msgContainer = document.createElement('div');
+    msgContainer.id = id;               // No setAttribute required
+    msgContainer.className = className; // No setAttribute required, note it's "className" to avoid conflict with JavaScript reserved word
+    msgContainer.appendChild(document.createTextNode(content));
+    document.body.appendChild(msgContainer);
+    return msgContainer;
+}
+
+// Helper for addResultBoxes that constructs a single box
+// 0.036886,0.740071 0.898778x0.108414 I BYEN MED DE KENDTE
+var boxCounter = 0;
+function addResultBox(boxData) {
+//    console.log('Processing box ' + boxData);
+    var parts = boxData.split(' ');
+    var x = parseFloat(parts[0].split(',')[0]);
+    var y = parseFloat(parts[0].split(',')[1]);
+    var w = parseFloat(parts[1].split('x')[0]);
+    var h = parseFloat(parts[1].split('x')[1]);
+    var content = '';
+    for (var i = 2 ; i < parts.length ; i++) {
+        if (i > 2) {
+            content += ' ';
+        }
+        content += parts[i];
+    }
+    console.log('Creating overlay box for x=' + x + ', y=' + y + ', w=' + w + ', h=' + h + ', content=' + content);
+    myDragon.drawer.addOverlay(createDiv('searchresult' + boxCounter++, 'searchresultbox', content), new OpenSeadragon.Rect(x, y, w, h), OpenSeadragon.OverlayPlacement.TOP_LEFT, '');
+}
+
+// Looks for attributes with the name 'box'. A box contains x,y in relative coordinates,
+// width x height i relative coordinates and optional context for the box. Sample:
+// 0.036886,0.740071 0.898778x0.108414 I BYEN MED DE KENDTE
+function addResultBoxes() {
+    var results = getRes();
+    document.title = document.title + ' ' + results + ' (length ' + results.length + ')';
+    for (var i = 0; i < results.length; i++) {
+        addResultBox(results[i]);
+    }
+}
+
 function setupJS() {
     // TODO: Check if this is an image page and if not, exit immediately
 
     toggleGrid();
     toggleTextBlock();
     toggleBlown();
-    
+    addResultBoxes();
+
     //! Create a callback for eack overlay with the overlay-ID as argument
     for (var i = 0; i < myDragon.overlays.length; i++) {
         id = myDragon.overlays[i].id;
