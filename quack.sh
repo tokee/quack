@@ -265,7 +265,7 @@ function copyFiles () {
 # http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
 # Input: template-file
 function ctemplate() {
-    TMP="`tempfile`.sh"
+    TMP="`mktemp`.sh"
     echo 'cat <<END_OF_TEXT' >  $TMP
     cat  "$1"                >> $TMP
     echo 'END_OF_TEXT'       >> $TMP
