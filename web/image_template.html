@@ -26,9 +26,9 @@ ${IDPREVS}
 ${ALTERNATIVES}
 <p class="histogram"><img src= "${HISTOGRAM}" width="256" height="200" alt="histogram"/></p>
 <p class="greystats">
-Darkest ${GREY_FIRST}: ${GREY_PERCENT_FIRST}%<br/>
+Dark ${GREY_FIRST}: ${GREY_PERCENT_FIRST}%<br/>
 Spike ${GREY_SPIKE}: ${GREY_PERCENT_SPIKE}%<br/>
-Lightest ${GREY_LAST}: ${GREY_PERCENT_LAST}%<br/>
+Light ${GREY_LAST}: ${GREY_PERCENT_LAST}%<br/>
 Unique greyscale values: ${GREY_UNIQUE}<br/>
 ALTO-PC: ${ACCURACY}%
 <p><input type="checkbox" id="toggle_grid" onClick="toggleGrid();">Grid</input></p>
@@ -102,9 +102,8 @@ ALTO-PC: ${ACCURACY}%
 
 <!-- TODO: Create decent bread crumbs -->
 <p>Parent folder: <a href="index.html">${PARENT}</a></p>
-<p>Source: ${SOURCE}</p>
+<p>Source: ${SOURCE} (${SOURCE_SIZE} KB)</p>
 <p>Direct: <a href="${IMAGE}">${IMAGE}</a></p>
-<p>Generated: ${DATE}</p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
