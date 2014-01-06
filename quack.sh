@@ -401,8 +401,10 @@ function makeImages() {
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
         fi
         if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
+            if [ ".true" == ".$PRESENTATION" ]; then
         # TODO: Specify JPEG quality
-            deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+                deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+            fi
         fi
     fi
 
