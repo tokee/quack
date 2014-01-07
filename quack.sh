@@ -134,6 +134,13 @@ export PRESENTATION_IMAGE_DISP_EXT="jpg"
 export OVERLAY_BLACK=3399FF
 export OVERLAY_WHITE=FFFF00
 
+# Limits for the overlays. Some scanners have absolute black as grey #02
+# To get grey #02 and below marked as blown black, set BLOWN_BLACK_BT to 3,3,3
+export BLOWN_WHITE_BT=255,255,255
+export BLOWN_WHITE_WT=254,254,254
+export BLOWN_BLACK_BT=1,1,1
+export BLOWN_BLACK_WT=0,0,0
+
 # Snippets are inserted verbatim at the top of the folder and the image pages.
 # Use them for specifying things like delivery date or provider notes.
 # Note that these snippet can be overridden on a per-folder and per-image basis
@@ -409,11 +416,11 @@ function makeImages() {
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold 255,255,255 -white-threshold 254,254,254 -negate -fill \#$OVERLAY_WHITE -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
+        gm convert "$CONV" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold 1,1,1 -white-threshold 0,0,0 -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
+        gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
 
     if [ ".true" == ".$PRESENTATION" ]; then
