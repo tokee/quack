@@ -36,10 +36,16 @@ function toggleBlown() {
     
     var content = document.getElementsByClassName('whiteoverlay');
     for (var i = 0 ; i < content.length ; i++) {
+        if (content[i].style.backgroundImage == '' && state == 'block') {
+            content[i].style.backgroundImage = "url('" + whiteoverlayurl + "')";
+        }
         content[i].style.display = state;
     }
     var content = document.getElementsByClassName('blackoverlay');
     for (var i = 0 ; i < content.length ; i++) {
+        if (content[i].style.backgroundImage == '' && state == 'block') {
+            content[i].style.backgroundImage = "url('" + blackoverlayurl + "')";
+        }
         content[i].style.display = state;
     }
 }
@@ -71,7 +77,9 @@ var prevs = {};
 function addForward(overlay, className) {
     if (!document.getElementById(overlay)) return;
     document.getElementById(overlay).className = document.getElementById(overlay).className + ' ' + className;
+//    console.log("Overlay " + overlay + " now has className " + document.getElementById(overlay).className);
     if (overlay in nexts) {
+//    console.log("Adding to next " + nexts[overlay] + " for " + overlay);
         addForward(nexts[overlay], className);
     }
 }
@@ -127,14 +135,96 @@ function outOverlay(overlay) {
     removeBackward(overlay, "next");
 }
 
+// URL parameter parsing
+// http://stackoverflow.com/questions/979975/how-to-get-the-value-from-url-parameter
+function getRes() {
+    var input = window.location.href;
+//    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");  
+//    var regexS = "/[\\?&]" + name + "=([^&#]*)/g";  
+//    var regex = new RegExp( regexS );  
+    var regex = /[\\?&]box=([^&#]*)/g;  
+    var results = [];
+
+    var tokens;
+    while (tokens = regex.exec(input)) { 
+        results.push(decodeURIComponent(tokens[1]));
+//        console.log('Pushing ' + decodeURIComponent(tokens[1]));
+    }
+    return results;
+}
+
+
+function createDiv(id, className, content) {
+    var msgContainer = document.createElement('div');
+    msgContainer.id = id;               // No setAttribute required
+    msgContainer.className = className; // No setAttribute required, note it's "className" to avoid conflict with JavaScript reserved word
+    msgContainer.appendChild(document.createTextNode(content));
+    document.body.appendChild(msgContainer);
+    return msgContainer;
+}
+
+// Helper for addResultBoxes that constructs a single box
+// 0.036886,0.740071 0.898778x0.108414 I BYEN MED DE KENDTE
+var boxCounter = 0;
+function addResultBox(boxData) {
+//    console.log('Processing box ' + boxData);
+    var parts = boxData.split(' ');
+    var x = parseFloat(parts[0].split(',')[0]);
+    var y = parseFloat(parts[0].split(',')[1]);
+    var w = parseFloat(parts[1].split('x')[0]);
+    var h = parseFloat(parts[1].split('x')[1]);
+    var content = '';
+    for (var i = 2 ; i < parts.length ; i++) {
+        if (i > 2) {
+            content += ' ';
+        }
+        content += parts[i];
+    }
+    console.log('Creating overlay box for x=' + x + ', y=' + y + ', w=' + w + ', h=' + h + ', content=' + content);
+    myDragon.drawer.addOverlay(createDiv('searchresult' + boxCounter++, 'searchresultbox', content), new OpenSeadragon.Rect(x, y, w, h), OpenSeadragon.OverlayPlacement.TOP_LEFT, '');
+}
+
+// Looks for attributes with the name 'box'. A box contains x,y in relative coordinates,
+// width x height i relative coordinates and optional context for the box. Sample:
+// 0.036886,0.740071 0.898778x0.108414 I BYEN MED DE KENDTE
+function addResultBoxes() {
+    var results = getRes();
+    document.title = document.title + ' ' + results + ' (length ' + results.length + ')';
+    for (var i = 0; i < results.length; i++) {
+        addResultBox(results[i]);
+    }
+}
+
+// Mark all groups (articles linked with IDNEXT) with class g$COUNT, starting from 1
+function colorGroups() {
+    console.log('Coloring groups started');
+    var count=1
+    for (var i = 0; i < myDragon.overlays.length; i++) {
+        var id = myDragon.overlays[i].id;
+        var element = document.getElementById(id);
+  
+  //      element.className = element.className + ' g' + count;
+ //       count++;
+ //       continue;
+
+        if (('highlight' == element.className) && (id in nexts)) {
+//            console.log('id ' + id + ' was in nextx: ' + id + " " + nexts[id] + " with old className=" + element.className);
+            addForward(id, "g" + count);
+            count++;
+        }
+    }
+    console.log('Coloring groups finished');
+}
+ 
 function setupJS() {
     // TODO: Check if this is an image page and if not, exit immediately
-
+    colorGroups();
     toggleGrid();
     toggleTextBlock();
     toggleBlown();
-    
-    //! Create a callback for eack overlay with the overlay-ID as argument
+    addResultBoxes();
+
+    // Create a callback for eack overlay with the overlay-ID as argument
     for (var i = 0; i < myDragon.overlays.length; i++) {
         id = myDragon.overlays[i].id;
         shortid = id.split("/").pop();

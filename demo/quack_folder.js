@@ -10,6 +10,24 @@ function toggleBlownThumbs() {
         content[i].style.display = state;
     }
 }
+function toggleHistograms() {    
+    if (document.getElementById('toggle_histograms').checked) {
+        thumb_state = 'none';
+        hist_state = 'block';
+    } else {
+        thumb_state = 'block';
+        hist_state = 'none';
+    }
+    
+    var content = document.getElementsByClassName('thumbs');
+    for (var i = 0 ; i < content.length ; i++) {
+        content[i].style.display = thumb_state;
+    }
+    var content = document.getElementsByClassName('histograms');
+    for (var i = 0 ; i < content.length ; i++) {
+        content[i].style.display = hist_state;
+    }
+}
 
 function setupThumbOverlays() {
     var content = document.getElementsByClassName('thumblink');
