@@ -223,10 +223,10 @@ ul.alternatives li + li:before {
 div.imagelinks {
     clear: both;
 }
-div.thumb {
+div.thumb, div.histograms div {
     float: left;
 }
-div.thumbs a {
+div.thumbs a, div.histograms a {
     position: relative;
     display: block;
 }
@@ -237,8 +237,16 @@ div.thumbs a {
     top: 0;
     left: 0;
 }
+.histograms img {
+    border: 1px dotted grey;
+    margin: 0.1em 0.2em 0.1em 0.2em;
+}
+.histograms {
+    display: none;
+}
 
-/* Linked articles */
+
+/* Linked articles on image page */
 
 .g1  { background-color: #FF0000; }
 .g2  { background-color: #00FF00; }
