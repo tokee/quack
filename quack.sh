@@ -794,7 +794,7 @@ function makePreviewPage() {
     # TODO: Use destination if that is lossless and faster to open?
     local GREY=`grey_stats "$SOURCE_IMAGE"`
 
-    # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $COUNT_SPIKE $PERCENT_SPIKE $GREY_SPIKE
+    # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $COUNT_SPIKE $PERCENT_SPIKE $GREY_SPIKE $ZEROES $HOLES
     # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
     GREY_PIXELS=`echo "$GREY" | cut -d\  -f1`
     GREY_UNIQUE=`echo "$GREY" | cut -d\  -f2`
@@ -807,6 +807,8 @@ function makePreviewPage() {
     GREY_COUNT_SPIKE=`echo "$GREY" | cut -d\  -f9`
     GREY_PERCENT_SPIKE=`echo "$GREY" | cut -d\  -f10`
     GREY_SPIKE=`echo "$GREY" | cut -d\  -f11`
+    GREY_ZEROES=`echo "$GREY" | cut -d\  -f12`
+    GREY_HOLES=`echo "$GREY" | cut -d\  -f13`
     local GREY_ALL_SOURCE=`im_identify "$SOURCE_IMAGE"`
     GREY_ALL=`cat "$GREY_ALL_SOURCE" | grep -A 256 Histogram | tail -n 256`
 

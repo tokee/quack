@@ -43,7 +43,7 @@ function im_identify() {
 # Input: image
 # Sample: foo.png
 # Produces foo.grey with $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
-# Output: $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY
+# Output: $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $ZEROES $HOLES
 function grey_stats() {
     local SRC="$1"
     if [ ! -f "$SRC" ]; then
@@ -56,6 +56,9 @@ function grey_stats() {
     local INFO=`cat "$IDENTIFY"`
     # TODO: No good as the histogram data might be much less than 256
     local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
+    if [ ! "." == ".`echo "$VALUES" | grep Colormap`" ]; then
+        local VALUES=`echo "$VALUES" | grep -B 256 Colormap`
+    fi        
     local RAW_VALUES=`echo "$VALUES" | grep "[0-9]\\+: ("`
 #    local VALUES="$INFO"
 
@@ -69,6 +72,11 @@ function grey_stats() {
     
     local LAST_COUNT=`echo $RAW_VALUES | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
     local LAST_GREY=`echo $RAW_VALUES | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+
+    local ZEROES=$((256-UNIQUE))
+    local SPAN=$((LAST_GREY-FIRST_GREY+1))
+    local EDGE=$((256-SPAN))
+    local HOLES=$((ZEROES-EDGE))
 
     local SPIKE_COUNT=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
     local SPIKE_GREY=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
@@ -87,7 +95,7 @@ function grey_stats() {
 
     IFS=$SAVEIFS
 
-    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $SPIKE_COUNT $SPIKE_PERCENT $SPIKE_GREY"
+    echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $SPIKE_COUNT $SPIKE_PERCENT $SPIKE_GREY $ZEROES $HOLES"
 }
 
 # Produces a histogram over greyscale intensities in the given image
