@@ -208,5 +208,5 @@ function histogram() {
     rm $HTMP
 }
 
- histogram $1 200 false
+# histogram $1 200 false
 # grey_stats $1
