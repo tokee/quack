@@ -77,7 +77,9 @@ var prevs = {};
 function addForward(overlay, className) {
     if (!document.getElementById(overlay)) return;
     document.getElementById(overlay).className = document.getElementById(overlay).className + ' ' + className;
+//    console.log("Overlay " + overlay + " now has className " + document.getElementById(overlay).className);
     if (overlay in nexts) {
+//    console.log("Adding to next " + nexts[overlay] + " for " + overlay);
         addForward(nexts[overlay], className);
     }
 }
@@ -193,15 +195,36 @@ function addResultBoxes() {
     }
 }
 
+// Mark all groups (articles linked with IDNEXT) with class g$COUNT, starting from 1
+function colorGroups() {
+    console.log('Coloring groups started');
+    var count=1
+    for (var i = 0; i < myDragon.overlays.length; i++) {
+        var id = myDragon.overlays[i].id;
+        var element = document.getElementById(id);
+  
+  //      element.className = element.className + ' g' + count;
+ //       count++;
+ //       continue;
+
+        if (('highlight' == element.className) && (id in nexts)) {
+//            console.log('id ' + id + ' was in nextx: ' + id + " " + nexts[id] + " with old className=" + element.className);
+            addForward(id, "g" + count);
+            count++;
+        }
+    }
+    console.log('Coloring groups finished');
+}
+ 
 function setupJS() {
     // TODO: Check if this is an image page and if not, exit immediately
-
+    colorGroups();
     toggleGrid();
     toggleTextBlock();
     toggleBlown();
     addResultBoxes();
 
-    //! Create a callback for eack overlay with the overlay-ID as argument
+    // Create a callback for eack overlay with the overlay-ID as argument
     for (var i = 0; i < myDragon.overlays.length; i++) {
         id = myDragon.overlays[i].id;
         shortid = id.split("/").pop();

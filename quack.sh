@@ -321,6 +321,7 @@ function makeImageParams() {
     SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
     DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
+    HISTOGRAM_LINK=${HIST_IMAGE##*/}
     THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
     THUMB_LINK=${THUMB_IMAGE##*/}
     WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
@@ -373,6 +374,7 @@ function makeImages() {
     local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
     local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
     local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
+    local HISTOGRAM_LINK=${HIST_IMAGE##*/}
     local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
     local THUMB_LINK=${THUMB_IMAGE##*/}
     local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
@@ -643,7 +645,7 @@ function resolveAlternatives() {
 # Creates only the HTML page itself. The corresponding makeImages must
 # be called before calling this function
 # up parent srcFolder dstFolder image prev_image next_image
-# Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT
+# Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT HISTOGRAM_LINK HISTOGRAM_WIDTH HISTOGRAM_HEIGHT
 function makePreviewPage() {
     local UP="$1"
     local PARENT="$2"
@@ -681,6 +683,9 @@ function makePreviewPage() {
     local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    local HIDENTIFY=`identify "$HIST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
+    HISTOGRAM_WIDTH=`echo $HIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
+    HISTOGRAM_HEIGHT=`echo $HIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
 
     if [ ".true" == ".$PRESENTATION" ]; then
         local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
@@ -794,7 +799,7 @@ function makePreviewPage() {
     # TODO: Use destination if that is lossless and faster to open?
     local GREY=`grey_stats "$SOURCE_IMAGE"`
 
-    # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $COUNT_SPIKE $PERCENT_SPIKE $GREY_SPIKE
+    # $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $COUNT_SPIKE $PERCENT_SPIKE $GREY_SPIKE $ZEROES $HOLES
     # 1000095 512 82362 8.23 (0,0,0) 255 .02 (255,255,255)
     GREY_PIXELS=`echo "$GREY" | cut -d\  -f1`
     GREY_UNIQUE=`echo "$GREY" | cut -d\  -f2`
@@ -807,6 +812,8 @@ function makePreviewPage() {
     GREY_COUNT_SPIKE=`echo "$GREY" | cut -d\  -f9`
     GREY_PERCENT_SPIKE=`echo "$GREY" | cut -d\  -f10`
     GREY_SPIKE=`echo "$GREY" | cut -d\  -f11`
+    GREY_ZEROES=`echo "$GREY" | cut -d\  -f12`
+    GREY_HOLES=`echo "$GREY" | cut -d\  -f13`
     local GREY_ALL_SOURCE=`im_identify "$SOURCE_IMAGE"`
     GREY_ALL=`cat "$GREY_ALL_SOURCE" | grep -A 256 Histogram | tail -n 256`
 
@@ -865,17 +872,20 @@ function makeIndex() {
 
     # Generate pages
     local THUMBS_HTML=""
+    local HISTOGRAMS_HTML=""
     local PREV_IMAGE=""
     if [ "." == ".$IMAGES" ]; then
         IMAGES_HTML="<p>No images</p>"$'\n'
     else
         IMAGES_HTML="<ul>"$'\n'
+        HISTOGRAMS_HTML="<ul>"$'\n'
         for I in $IMAGES; do
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
             makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
             IMAGES_HTML="${IMAGES_HTML}<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
 
             THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
+            HISTOGRAMS_HTML="${HISTOGRAMS_HTML}<div class=\"histograminfolder\"><a href=\"$PAGE_LINK\"><img src=\"${HISTOGRAM_LINK}\" alt=\"Histogram for $BASE\" title=\"Histogram for $BASE\" width=\"$HISTOGRAM_WIDTH\" height=\"$HISTOGRAM_HEIGHT\"/></a></div>"$'\n'
 #            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
             PREV_IMAGE=$I
         done
@@ -922,7 +932,7 @@ function makeIndex() {
     fi
     popd > /dev/null
 
-    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, HISTOGRAMS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
     ctemplate $FOLDER_TEMPLATE > $PP
     
     # Generate pages for sub folders
