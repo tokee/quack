@@ -107,13 +107,17 @@ function histogram() {
     # into
     # 0 78085
     # 1 3410
-    GREYS=`cat "$IDENTIFY" | grep -A 9999 "  Histogram:" | grep -o " \\+[0-9]\\+: ( *[0-9]\\+, *[0-9]\\+, *[0-9]\\+)" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
-    
+    if [ "." == ".`grep \"Colormap:\" \"$IDENTIFY\"`" ]; then
+        GREYS=`cat "$IDENTIFY" | grep -A 256 "  Histogram:" | grep -o " \\+[0-9]\\+: ( *[0-9]\\+, *[0-9]\\+, *[0-9]\\+)" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
+     else
+       GREYS=`cat "$IDENTIFY" | grep -A 9999 "  Histogram:" | grep -B 256 "Colormap:" | grep -o " \\+[0-9]\\+: ( *[0-9]\\+, *[0-9]\\+, *[0-9]\\+)" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
+    fi
     # Find lowest and highest for both intensity and count
     local MIN_GREY=255
     local MAX_GREY=0
     local MIN_COUNT=9999999
     local MAX_COUNT=0
+    local TOTAL_COUNT=0
 
     local SAVEIFS=$IFS
     IFS=$(echo -en "\n\b")
@@ -121,6 +125,7 @@ function histogram() {
     do
         local GREY=`echo "$L" | cut -d\  -f1`
         local COUNT=`echo "$L" | cut -d\  -f2`
+        local TOTAL_COUNT=$((TOTAL_COUNT+COUNT))
         if [ $MIN_GREY -gt $GREY ]; then
             local MIN_GREY=$GREY
         fi
@@ -134,8 +139,9 @@ function histogram() {
             local MAX_COUNT=$COUNT
         fi
     done <<< "$GREYS"
+
     IFS=$SAVEIFS
-#    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT"
+    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
 
     # Let SCALE map all counts from 0 to 1
     if [ ".true" == ".$LOG" ]; then
@@ -194,5 +200,5 @@ function histogram() {
     rm $HTMP
 }
 
-# histogram $1 200 false
+ histogram $1 200 false
 # grey_stats $1
