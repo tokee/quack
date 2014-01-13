@@ -205,6 +205,7 @@ if [ -d $TEMPDIR_LOCK ]; then
     echo "Removing hopefully stale lock folder $TEMPDIR_LOCK"
     rm -rf $TEMPDIR_LOCK $IMAGE_COUNTER
 fi
+echo "0" > $IMAGE_COUNTER
 
 function usage() {
     echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
