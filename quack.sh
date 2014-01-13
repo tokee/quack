@@ -698,7 +698,7 @@ function makePreviewPage() {
     if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
     fi
-***    
+    
     TOTAL_PROCESSED=$((TOTAL_PROCESSED))
     echo " - ${P##*/} (${TOTAL_PROCESSED}/${TOTAL_IMAGES})"
 
