@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.2 beta - Quality assurance tool for text scanning projects.
+# Quack 1.3 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
