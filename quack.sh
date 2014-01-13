@@ -167,6 +167,7 @@ OSD_DIRECT="http://github.com/openseadragon/openseadragon/releases/download/v1.0
 START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
 ROOT=`pwd`
+
 if [ -e "quack.settings" ]; then
     echo "Sourcing user settings from quack.settings in `pwd`"
     source "quack.settings"
@@ -197,6 +198,13 @@ FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/web/image_template.html"
 IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
 DRAGON="openseadragon.min.js"
+
+export IMAGE_COUNTER="$ROOT/quack.imagecounter.temp.$$"
+export TEMPDIR_LOCK="$ROOT/quack.lock.$$"
+if [ -d $TEMPDIR_LOCK ]; then
+    echo "Removing hopefully stale lock folder $TEMPDIR_LOCK"
+    rm -rf $TEMPDIR_LOCK $IMAGE_COUNTER
+fi
 
 function usage() {
     echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
@@ -392,9 +400,23 @@ function makeImages() {
         exit
     fi
 
+    # This is multi threaded so we need to synchronize the counter update
+    # and we need to use a file to holde the counter as environment variables
+    # are not updated across threads. Rather ugly.
+    # http://stackoverflow.com/questions/8231847/bash-script-to-count-number-of-times-script-has-run
+    mkdir $TEMPDIR_LOCK 2> /dev/null
+    while [[ $? -ne 0 ]] ; do
+        sleep 0.1
+        mkdir $TEMPDIR_LOCK 2> /dev/null
+    done
+    CREATED_IMAGES=`cat $IMAGE_COUNTER`
+    CREATED_IMAGES=$((CREATED_IMAGES+1))
+    echo "$CREATED_IMAGES" > $IMAGE_COUNTER
+    rm -rf $TEMPDIR_LOCK
+
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
-    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA"; then
+    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES}"; then
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
@@ -701,8 +723,8 @@ function makePreviewPage() {
         return
     fi
     
-    TOTAL_PROCESSED=$((TOTAL_PROCESSED+1))
-    echo " - ${P##*/} (${TOTAL_PROCESSED}/${TOTAL_IMAGES})"
+    CREATED_PAGES=$((CREATED_PAGES+1))
+    echo " - ${P##*/} (${CREATED_PAGES}/${TOTAL_IMAGES})"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"
     processALTO "$SRC_FOLDER" "$DEST_FOLDER" "$ALTO_FILE" $IMAGE_WIDTH $IMAGE_HEIGHT
@@ -955,9 +977,11 @@ function makeIndex() {
 echo "Quack starting at `date`"
 copyFiles
 pushd "$SOURCE" > /dev/null
-TOTAL_IMAGES=`ls -R $IMAGE_GLOB 2> /dev/null | wc -l`
-TOTAL_PROCESSED=0
+export TOTAL_IMAGES=`ls -R $IMAGE_GLOB 2> /dev/null | wc -l`
+CREATED_PAGES=0
+export CREATED_IMAGES=0
 popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
+rm -r $IMAGE_COUNTER
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
