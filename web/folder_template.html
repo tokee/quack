@@ -19,11 +19,16 @@
 <div class="images">
 <h2>Pages</h2>
 <p><input type="checkbox" id="toggle_blown_thumbs" onClick="toggleBlownThumbs();">Show absolute black and white</input><br/><input type="checkbox" id="toggle_histograms" onClick="toggleHistograms();">Histogram view</input></p>
+
 <div class="thumbs">${THUMBS_HTML}</div>
+
 <div class="histograms">${HISTOGRAMS_HTML}</div>
-<div class="imagelinks">
-${IMAGES_HTML}
-</div>
+<!-- http://www.kryogenix.org/code/browser/sorttable/ -->
+
+<div class="imagelinks"><table class="imagelinks sortable"><tr><th>Image</th> <th>Dark</th> <th>Spike</th> <th>Light</th> <th>Unique</th> <th>Holes</th> <th>OCR</th> <th>KB</th> <th>MP</th></tr>
+${ILIST_HTML}
+</table></div>
+
 </div>
 
 <div class="subfolders">

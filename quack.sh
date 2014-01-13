@@ -682,6 +682,7 @@ function makePreviewPage() {
     local IDENTIFY=`identify "$DEST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     IMAGE_WIDTH=`echo $IDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     IMAGE_HEIGHT=`echo $IDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    IMAGE_MP=`echo "scale=1;x=$IMAGE_WIDTH*$IMAGE_HEIGHT/1000000; if(x<1) print 0; x" | bc`
     local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
     THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
     THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
@@ -724,7 +725,7 @@ function makePreviewPage() {
         NAVIGATION="${NAVIGATION} | next"
     fi
 
-    # PARENT, DATE, UP, NAVIGATION, BASE, SOURCE, FULL_RELATIVE_HEIGHT, EDEST, IMAGE_WIDTH, IMAGE_HEIGHT, TILE_SOURCES, THUMB, THUMB_WIDTH, THUMB_HEIGHT, PRESENTATION, PRESENTATION_WIDTH, PRESENTATION_HEIGHT, WHITE, BLACK, OVERLAYS, OCR_CONTENT, IDNEXTS, IDPREVS, ALTO_ELEMENTS_HTML, HISTOGRAM, ALTO, ALTERNATIVES
+    # PARENT, DATE, UP, NAVIGATION, BASE, SOURCE, FULL_RELATIVE_HEIGHT, EDEST, IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_MP, TILE_SOURCES, THUMB, THUMB_WIDTH, THUMB_HEIGHT, PRESENTATION, PRESENTATION_WIDTH, PRESENTATION_HEIGHT, WHITE, BLACK, OVERLAYS, OCR_CONTENT, IDNEXTS, IDPREVS, ALTO_ELEMENTS_HTML, HISTOGRAM, ALTO, ALTERNATIVES
     SOURCE="$SOURCE_IMAGE"
     SOURCE_SHORT=${SOURCE##*/}
     SOURCE_SIZE=`du -k "$SOURCE" | grep -o "^[0-9]\+"`
@@ -877,25 +878,23 @@ function makeIndex() {
     # Generate pages
     local THUMBS_HTML=""
     local HISTOGRAMS_HTML=""
+    local ILIST_HTML=""
     local PREV_IMAGE=""
     if [ "." == ".$IMAGES" ]; then
-        IMAGES_HTML="<p>No images</p>"$'\n'
+        THUMBS_HTML="<p>No images</p>"$'\n'
+        HISTOGRAMS_HTML="<p>No images</p>"$'\n'
     else
-        # http://www.kryogenix.org/code/browser/sorttable/
-        IMAGES_HTML="<table class=\"imagelinks sortable\"><tr><th>Image</th> <th>Dark</th> <th>Spike</th> <th>Light</th> <th>Unique</th> <th>Holes</th> <th>OCR</th> <th>KB</th></tr>"$'\n'
-        HISTOGRAMS_HTML=""$'\n'
         for I in $IMAGES; do
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
             makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
-            IMAGES_HTML="${IMAGES_HTML}`cat \"$ILINK\"`"$'\n'
-#            IMAGES_HTML=<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
+            ILIST_HTML="${ILIST_HTML}`cat \"$ILINK\"`"$'\n'
+#            ILIST_HTML=<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
 
             THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
             HISTOGRAMS_HTML="${HISTOGRAMS_HTML}<div class=\"histograminfolder\"><a href=\"$PAGE_LINK\"><img src=\"${HISTOGRAM_LINK}\" alt=\"Histogram for $BASE\" title=\"Histogram for $BASE\" width=\"$HISTOGRAM_WIDTH\" height=\"$HISTOGRAM_HEIGHT\"/></a></div>"$'\n'
 #            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
             PREV_IMAGE=$I
         done
-        IMAGES_HTML="${IMAGES_HTML}</table>"$'\n'
     fi
 
     local SUBS=`ls "$SRC_FOLDER"`
@@ -938,7 +937,7 @@ function makeIndex() {
     fi
     popd > /dev/null
 
-    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, IMAGES_HTML, THUMBS_HTML, HISTOGRAMS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
+    # UP, PARENT, SRC_FOLDER, DEST_FOLDER, ILIST_HTML, THUMBS_HTML, HISTOGRAMS_HTML, SUBFOLDERS_HTML, EDITION_HTML, SNIPPET
     ctemplate $FOLDER_TEMPLATE > $PP
     
     # Generate pages for sub folders
