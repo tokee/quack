@@ -699,7 +699,7 @@ function makePreviewPage() {
         return
     fi
     
-    TOTAL_PROCESSED=$((TOTAL_PROCESSED))
+    TOTAL_PROCESSED=$((TOTAL_PROCESSED+1))
     echo " - ${P##*/} (${TOTAL_PROCESSED}/${TOTAL_IMAGES})"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"
