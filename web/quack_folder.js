@@ -29,9 +29,61 @@ function toggleHistograms() {
     }
 }
 
-function thclick() {
-    // Consider a timeout if there is a race condition with the table sort
+// Locates an inner div with a link to the given href, then moved it to the last
+// position in the given div
+function moveToEnd(div, href) {
+    var inners = div.getElementsByTagName('div');
+    for (var i = 0 ; i < inners.length ; i++) {
+        var inner = inners[i];
+        var tlinks = inner.getElementsByTagName('a');
+        if (tlinks.length > 0) {
+            var tlink = tlinks[0];
+            if (tlink.href == href) {
+                inner.parentNode.appendChild(inner);
+                return;
+            }
+        }
+    }
+}
+
+// Iterates the rows in the table, collecting links to image pages.
+// For each link, moveToEnd is called for the thumbs and the histograms div,
+// thereby synchronicing the thumbnails and histograms to the order of the 
+// images in the table.
+function thClick() {
+    var thumbss = document.getElementsByClassName('thumbs');
+    if (thumbss.length != 1) {
+        console.log('thClick: Expected 1 div.thumbs but got ' + thumbss.length);
+        return;
+    }
+    var thumbs = thumbss[0];
+
+    var histss = document.getElementsByClassName('histograms');
+    if (histss.length != 1) {
+        console.log('thClick: Expected 1 div.histograms but got ' + histss.length);
+        return;
+    }
+    var hists = histss[0];
+
     // TODO: Order the image divs like the table links are ordered
+    var tables = document.getElementsByClassName('sortable');
+    for (var i = 0 ; i < tables.length ; i++) {
+        var stable = tables[i];
+        var trows = stable.getElementsByTagName('tr');
+        for (var t = 0 ; t < trows.length ; t++) {
+            var trow = trows[t];
+            var tcells = trow.getElementsByTagName('td');
+            if (tcells.length > 0) {
+                var tcell = tcells[0];
+                var tlinks = tcell.getElementsByTagName('a');
+                if (tlinks.length > 0) {
+                    var tlink = tlinks[0];
+                    moveToEnd(thumbs, tlink.href);
+                    moveToEnd(hists, tlink.href);
+                }
+            }
+        }
+    }
 }
 
 var oldOnload = window.onload;
@@ -62,7 +114,7 @@ function initialSetup() {
         var theads = stable.getElementsByTagName('th');
         for (var h = 0 ; h < theads.length ; h++) {
             thead = theads[h];
-            thead.onclick = thclick;
+            thead.onclick = thClick;
         }
     }
 }
