@@ -407,11 +407,12 @@ function makeImages() {
 
     if [ ".true" == ".$TILE" ]; then
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
-        # TODO: Specify JPEG quality
+       # TODO: Specify JPEG quality
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
         fi
-        if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
-            if [ ".true" == ".$PRESENTATION" ]; then
+
+        if [ ".true" == ".$PRESENTATION" ]; then
+            if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
         # TODO: Specify JPEG quality
                 deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
             fi
