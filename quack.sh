@@ -582,7 +582,7 @@ function processALTO() {
     local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
     local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
     ACCURACY=`echo $PTAG | sed 's/.*PC=\"\([^"]\+\)".*/\\1/g'`
-    ACCURACY=`echo "scale=2;$ACCURACY*100" | bc`
+    ACCURACY=`echo "scale=2;x=$ACCURACY*100/1; if(x<1) print 0; x" | bc`
 
     FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
     # TODO: Ponder how relative positioning works and why this hack is necessary
