@@ -698,8 +698,9 @@ function makePreviewPage() {
     if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
     fi
-
-    echo " - ${P##*/}"
+***    
+    TOTAL_PROCESSED=$((TOTAL_PROCESSED))
+    echo " - ${P##*/} (${TOTAL_PROCESSED}/${TOTAL_IMAGES})"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"
     processALTO "$SRC_FOLDER" "$DEST_FOLDER" "$ALTO_FILE" $IMAGE_WIDTH $IMAGE_HEIGHT
@@ -953,6 +954,10 @@ function makeIndex() {
 
 echo "Quack starting at `date`"
 copyFiles
+pushd "$SOURCE" > /dev/null
+TOTAL_IMAGES=`ls -R $IMAGE_GLOB 2> /dev/null | wc -l`
+TOTAL_PROCESSED=0
+popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
