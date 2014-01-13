@@ -244,6 +244,32 @@ div.thumbs a, div.histograms a {
 .histograms {
     display: none;
 }
+table.imagelinks {
+    border: 1px solid black;
+}
+table.imagelinks, table.imagelinks tr td, table.imagelinks tr th {
+    border-collapse: collapse;
+}
+table.imagelinks tr td, table.imagelinks tr th {
+    padding: 0.2em 0.4em 0.2em 0.4em;
+    border: none;
+}
+table.imagelinks tr th {
+    background: #C5AE93;
+}
+table.imagelinks tbody tr:nth-child(2n+1) td {
+  background: #FFEEC3;
+}
+table.imagelinks th
+{
+    text-align:left;
+}
+
+table.imagelinks td + td,
+table.imagelinks th + th
+{
+    text-align:right
+}
 
 
 /* Linked articles on image page */

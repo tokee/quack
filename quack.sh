@@ -195,6 +195,7 @@ if [ -f "$START_PATH/presentation.sh" ]; then
 fi
 FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/web/image_template.html"
+IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
 DRAGON="openseadragon.min.js"
 
 function usage() {
@@ -645,7 +646,7 @@ function resolveAlternatives() {
 # Creates only the HTML page itself. The corresponding makeImages must
 # be called before calling this function
 # up parent srcFolder dstFolder image prev_image next_image
-# Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT HISTOGRAM_LINK HISTOGRAM_WIDTH HISTOGRAM_HEIGHT
+# Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT HISTOGRAM_LINK HISTOGRAM_WIDTH HISTOGRAM_HEIGHT ILINK
 function makePreviewPage() {
     local UP="$1"
     local PARENT="$2"
@@ -658,6 +659,7 @@ function makePreviewPage() {
     local SANS_PATH=${IMAGE##*/}
     BASE=${SANS_PATH%.*}
     P="${DEST_FOLDER}/${BASE}.html"
+    ILINK="${DEST_FOLDER}/${BASE}.link.html"
 
     local SSNIP="${BASE}${SPECIFIC_IMAGE_SNIPPET_EXTENSION}"
 
@@ -818,6 +820,7 @@ function makePreviewPage() {
     GREY_ALL=`cat "$GREY_ALL_SOURCE" | grep -A 256 Histogram | tail -n 256`
 
     ctemplate $IMAGE_TEMPLATE > $P
+    ctemplate $IMAGELINK_TEMPLATE > $ILINK
    
 #    ls -l "$IMAGE"
 #   echo "$GREY"
@@ -877,19 +880,21 @@ function makeIndex() {
     if [ "." == ".$IMAGES" ]; then
         IMAGES_HTML="<p>No images</p>"$'\n'
     else
-        IMAGES_HTML="<ul>"$'\n'
-        HISTOGRAMS_HTML="<ul>"$'\n'
+        # http://www.kryogenix.org/code/browser/sorttable/
+        IMAGES_HTML="<table class=\"imagelinks sortable\"><tr><th>Image</th> <th>Dark</th> <th>Spike</th> <th>Light</th> <th>Unique</th> <th>Holes</th> <th>OCR</th> <th>KB</th></tr>"$'\n'
+        HISTOGRAMS_HTML=""$'\n'
         for I in $IMAGES; do
             local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
             makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
-            IMAGES_HTML="${IMAGES_HTML}<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
+            IMAGES_HTML="${IMAGES_HTML}`cat \"$ILINK\"`"$'\n'
+#            IMAGES_HTML=<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
 
             THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
             HISTOGRAMS_HTML="${HISTOGRAMS_HTML}<div class=\"histograminfolder\"><a href=\"$PAGE_LINK\"><img src=\"${HISTOGRAM_LINK}\" alt=\"Histogram for $BASE\" title=\"Histogram for $BASE\" width=\"$HISTOGRAM_WIDTH\" height=\"$HISTOGRAM_HEIGHT\"/></a></div>"$'\n'
 #            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
             PREV_IMAGE=$I
         done
-        IMAGES_HTML="${IMAGES_HTML}</ul>"$'\n'
+        IMAGES_HTML="${IMAGES_HTML}</table>"$'\n'
     fi
 
     local SUBS=`ls "$SRC_FOLDER"`
