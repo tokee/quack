@@ -63,23 +63,49 @@ function grey_stats() {
 #    local VALUES="$INFO"
 
     local SAVEIFS=$IFS
-    IFS=$(echo -en "\n")
+    IFS=$(echo -en $"\n")
     
-    local UNIQUE=`echo $RAW_VALUES | wc -l`
+    local UNIQUE=`echo "$RAW_VALUES" | wc -l`
 
-    local FIRST_COUNT=`echo $RAW_VALUES | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local FIRST_GREY=`echo $RAW_VALUES | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
-    
-    local LAST_COUNT=`echo $RAW_VALUES | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local LAST_GREY=`echo $RAW_VALUES | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+#    local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
+
+    export BLOWN_BLACK_BT=3,3,3
+
+    if [ ! "1,1,1" == ".$BLOWN_BLACK_BT" ]; then
+        # TODO: Add skipping based on BLOWN_BLACK_WT
+        local FIRST_COUNT=0
+        local MAXG=`echo "$BLOWN_BLACK_BT" | grep -o "^[^,]\+"`
+#        echo "$RAW_VALUES" | head -n $MAXG
+        IFS=$(echo -en $"\n\b")
+        for E in `echo "$RAW_VALUES" | head -n $MAXG`; do
+#            echo "e:$E"
+            # 81422: (  0,  0,  0) #000000 black
+            local C=`echo "$E" | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+            local G=`echo "$E" | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
+#            echo "c:$C g:$G t:$MAXG"
+            if [ "$G" -lt "$MAXG" ]; then
+                local FIRST_COUNT=$((FIRST_COUNT+$C))
+                local LAST_VALID=$G
+            fi
+        done
+        local FIRST_GREY="0-$LAST_VALID"
+        #local FIRST_GREY=`echo "$E" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    else
+        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+        local FIRST_COUNT=`echo "$RAW_VALUES" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    fi
+    IFS=$(echo -en $"\n")
+
+    local LAST_COUNT=`echo "$RAW_VALUES" | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local LAST_GREY=`echo "$RAW_VALUES" | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
 
     local ZEROES=$((256-UNIQUE))
     local SPAN=$((LAST_GREY-FIRST_GREY+1))
     local EDGE=$((256-SPAN))
     local HOLES=$((ZEROES-EDGE))
 
-    local SPIKE_COUNT=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local SPIKE_GREY=`echo $RAW_VALUES | sort -n | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    local SPIKE_COUNT=`echo "$RAW_VALUES" | sort -n | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local SPIKE_GREY=`echo "$RAW_VALUES" | sort -n | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
 
     local GEOMETRY=`echo $INFO | grep "Geometry: [0-9]\\+x[0-9]\\+" | grep -o "[0-9]\\+x[0-9]\\+"`
     local X=`echo $GEOMETRY | grep -o "[0-9]\\+x" | grep -o "[0-9]\\+"`
