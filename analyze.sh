@@ -69,8 +69,6 @@ function grey_stats() {
 
 #    local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
 
-    export BLOWN_BLACK_BT=3,3,3
-
     if [ ! "1,1,1" == ".$BLOWN_BLACK_BT" ]; then
         # TODO: Add skipping based on BLOWN_BLACK_WT
         local FIRST_COUNT=0
