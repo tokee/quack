@@ -438,6 +438,12 @@ function makeImages() {
         local CONV="$SOURCE_IMAGE"
     fi
 
+    if [ ".true" == ".$PRESENTATION" ]; then
+        if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
+            $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
+        fi
+    fi
+
     if [ ".true" == ".$TILE" ]; then
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
        # TODO: Specify JPEG quality
@@ -462,12 +468,6 @@ function makeImages() {
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
-    fi
-
-    if [ ".true" == ".$PRESENTATION" ]; then
-        if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
-            $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
-        fi
     fi
 
     if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
