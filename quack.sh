@@ -73,9 +73,12 @@ export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
 
-# Number of threads used for image processing. Note that histogram generation
-# is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
+# Number of threads used for image processing.
 THREADS=4
+
+# Number of threads used for histograms.  Note that histogram generation
+# is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
+HISTOGRAM_THREADS=2
 
 # For production it is recommended that all FORCE_ options are set to "false" as
 # it makes iterative updates fast. If quack settings are tweaked, the relevant
@@ -200,12 +203,19 @@ IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
 DRAGON="openseadragon.min.js"
 
 export IMAGE_COUNTER="$ROOT/quack.imagecounter.temp.$$"
+export HIST_COUNTER="$ROOT/quack.histogramcounter.temp.$$"
 export TEMPDIR_LOCK="$ROOT/quack.lock.$$"
+export TEMPDIR_HIST_LOCK="$ROOT/quack.hist.lock.$$"
 if [ -d $TEMPDIR_LOCK ]; then
     echo "Removing hopefully stale lock folder $TEMPDIR_LOCK"
     rm -rf $TEMPDIR_LOCK $IMAGE_COUNTER
 fi
+if [ -d $TEMPDIR_HIST_LOCK ]; then
+    echo "Removing hopefully stale lock folder $TEMPDIR_HIST_LOCK"
+    rm -rf $TEMPDIR_HIST_LOCK $HIST_COUNTER
+fi
 echo "0" > $IMAGE_COUNTER
+echo "0" > $HIST_COUNTER
 
 function usage() {
     echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
@@ -435,9 +445,13 @@ function makeImages() {
         fi
 
         if [ ".true" == ".$PRESENTATION" ]; then
-            if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "tiles"; then
+            if shouldGenerate "$FORCE_TILES" "$PRESENTATION_TILE_FOLDER" "presentation tiles"; then
+                if [ ! -f "$PRESENTATION_IMAGE" ]; then
+                    echo "Error: The image $PRESENTATION_IMAGE does not exist"
+                else
         # TODO: Specify JPEG quality
-                deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+                    deepzoom "$PRESENTATION_IMAGE" -format $PRESENTATION_IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
+                fi
             fi
         fi
     fi
@@ -453,16 +467,6 @@ function makeImages() {
     if [ ".true" == ".$PRESENTATION" ]; then
         if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
             $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
-        fi
-    fi
-
-    if shouldGenerate "$FORCE_HISTOGRAM" "$HIST_IMAGE" "histogram"; then
-        # Remove "-separate -append" to generate a RGB histogram
-        # http://www.imagemagick.org/Usage/files/#histogram
-        if [ "." == ".$CROP_PERCENT" ]; then
-            convert "$CONV" -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
-        else
-            convert "$CONV" -gravity Center -crop $CROP_PERCENT%x+0+0 -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
         fi
     fi
 
@@ -484,6 +488,67 @@ function makeImages() {
     fi
 }
 export -f makeImages
+
+# Histogram generation is separated from generic image generation as it takes a lot of memory
+# srcFolder dstFolder image crop presentation_script tile
+function makeHistograms() {
+    local SRC_FOLDER="$1"
+    local DEST_FOLDER="$2"
+    local IMAGE="$3"
+    local CROP_PERCENT="$5"
+    local PRESENTATION_SCRIPT="$6"
+    local TILE="$7"
+
+#    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
+
+    local SANS_PATH=${IMAGE##*/}
+    local BASE=${SANS_PATH%.*}
+
+    local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
+
+    # Must mirror the ones in makeImageParams
+    # Do not cheat by calling makeImageParams as makeImages might
+    # be called in parallel
+    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
+
+    if [ ! -f "$SOURCE_IMAGE" ]; then
+        echo "The source image $S does not exists" >&2
+        exit
+    fi
+
+    # This is multi threaded so we need to synchronize the counter update
+    # and we need to use a file to holde the counter as environment variables
+    # are not updated across threads. Rather ugly.
+    # http://stackoverflow.com/questions/8231847/bash-script-to-count-number-of-times-script-has-run
+    mkdir $TEMPDIR_HIST_LOCK 2> /dev/null
+    while [[ $? -ne 0 ]] ; do
+        sleep 0.1
+        mkdir $TEMPDIR_HIST_LOCK 2> /dev/null
+    done
+    local CREATED_HIST=`cat $HIST_COUNTER`
+    local CREATED_HIST=$((CREATED_HIST+1))
+    echo "$CREATED_HIST" > $HIST_COUNTER
+    rm -rf $TEMPDIR_HIST_LOCK
+
+    if [ "png" == ${IMAGE_DISP_EXT} ]; then
+        # PNG is fairly fast to decode so use that as source
+        local CONV="$DEST_IMAGE"
+    else
+        local CONV="$SOURCE_IMAGE"
+    fi
+
+    if shouldGenerate "$FORCE_HISTOGRAM" "$HIST_IMAGE" "histogram (${CREATED_HIST}/${TOTAL_IMAGES})"; then
+        # Remove "-separate -append" to generate a RGB histogram
+        # http://www.imagemagick.org/Usage/files/#histogram
+        if [ "." == ".$CROP_PERCENT" ]; then
+            convert "$CONV" -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
+        else
+            convert "$CONV" -gravity Center -crop $CROP_PERCENT%x+0+0 -separate -append -define histogram:unique-colors=false -write histogram:mpr:hgram +delete mpr:hgram -negate -strip "$HIST_IMAGE"
+        fi
+    fi
+}
+export -f makeHistograms
 
 # Generates overlays for the stated block and updates idnext & idprev
 # altoxml (newlines removed) tag class
@@ -902,6 +967,9 @@ function makeIndex() {
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
     echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
+    # Generate histograms
+    echo "$IMAGES" | xargs -n 1 -I'{}' -P $HISTOGRAM_THREADS bash -c 'makeHistograms "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
+
     # Generate pages
     local THUMBS_HTML=""
     local HISTOGRAMS_HTML=""
@@ -986,6 +1054,6 @@ CREATED_PAGES=0
 export CREATED_IMAGES=0
 popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
-rm -r $IMAGE_COUNTER
+rm -r $IMAGE_COUNTER $HIST_COUNTER
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
