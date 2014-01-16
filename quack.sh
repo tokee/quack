@@ -586,6 +586,9 @@ function processALTO() {
     OVERLAYS=""
     ELEMENTS_HTML=""
     OCR_CONTENT=""
+    IDNEXT_CONTENT=""
+    FULL_RELATIVE_HEIGHT="1"
+    ACCURACY="N/A"
 
     local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
     blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
