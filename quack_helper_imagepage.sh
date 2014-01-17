@@ -19,7 +19,10 @@ function makePreviewPage() {
     local SANS_PATH=${IMAGE##*/}
     BASE=${SANS_PATH%.*}
     P="${DEST_FOLDER}/${BASE}.html"
-    ILINK="${DEST_FOLDER}/${BASE}.link.html"
+    # Must be kept in sync with quack.makeIndex()
+    local ILINK="${DEST_FOLDER}/${BASE}.link.html"
+    local TLINK="${DEST_FOLDER}/${BASE}.thumb.html"
+    local HLINK="${DEST_FOLDER}/${BASE}.hist.html"
 
     local SSNIP="${BASE}${SPECIFIC_IMAGE_SNIPPET_EXTENSION}"
 
@@ -183,7 +186,9 @@ function makePreviewPage() {
 
     ctemplate $IMAGE_TEMPLATE > $P
     ctemplate $IMAGELINK_TEMPLATE > $ILINK
-   
+    ctemplate $HIST_TEMPLATE > $HLINK
+    ctemplate $THUMB_TEMPLATE > $TLINK
+
 #    ls -l "$IMAGE"
 #   echo "$GREY"
     # ***
@@ -191,6 +196,7 @@ function makePreviewPage() {
 
 #    cat $P
 #    exit
+
 
  }
 export -f makePreviewPage

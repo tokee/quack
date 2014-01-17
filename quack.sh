@@ -201,6 +201,8 @@ fi
 FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
 IMAGE_TEMPLATE="$ROOT/web/image_template.html"
 IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
+THUMB_TEMPLATE="$ROOT/web/thumb_template.html"
+HIST_TEMPLATE="$ROOT/web/histogram_template.html"
 DRAGON="openseadragon.min.js"
 
 export IMAGE_COUNTER="$ROOT/quack.imagecounter.temp.$$"
@@ -782,24 +784,33 @@ function makeIndex() {
     echo "$IMAGES" | xargs -n 1 -I'{}' -P $HISTOGRAM_THREADS bash -c 'makeHistograms "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
+#    local PREV_IMAGE=""
+    if [ ! "." == ".$IMAGES" ]; then
+        for I in $IMAGES; do
+            local PREV_IMAGE=`echo "$IMAGES" | grep -B 1 "$I" | head -n 1 | grep -v "$I"`
+            local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
+            makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
+        done
+    fi
+
+    # Generate links, thumbs and histograms from the pages for the folder view
     local THUMBS_HTML=""
     local HISTOGRAMS_HTML=""
     local ILIST_HTML=""
-    local PREV_IMAGE=""
     if [ "." == ".$IMAGES" ]; then
-        THUMBS_HTML="<p>No images</p>"$'\n'
-        HISTOGRAMS_HTML="<p>No images</p>"$'\n'
+        local THUMBS_HTML="<p>No images</p>"$'\n'
+        local HISTOGRAMS_HTML="<p>No images</p>"$'\n'
     else
         for I in $IMAGES; do
-            local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
-            makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
-            ILIST_HTML="${ILIST_HTML}`cat \"$ILINK\"`"$'\n'
-#            ILIST_HTML=<li><a href=\"$PAGE_LINK\">$BASE</a></li>"$'\n'
-
-            THUMBS_HTML="${THUMBS_HTML}<div class=\"thumb\"><a class=\"thumblink\" href=\"$PAGE_LINK\"><span class=\"thumboverlay\"></span><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a></div>"$'\n'
-            HISTOGRAMS_HTML="${HISTOGRAMS_HTML}<div class=\"histograminfolder\"><a href=\"$PAGE_LINK\"><img src=\"${HISTOGRAM_LINK}\" alt=\"Histogram for $BASE\" title=\"Histogram for $BASE\" width=\"$HISTOGRAM_WIDTH\" height=\"$HISTOGRAM_HEIGHT\"/></a></div>"$'\n'
-#            THUMBS_HTML="${THUMBS_HTML}<a class=\"thumblink\" href=\"$PAGE_LINK\"><img class=\"thumbimg\" src=\"${THUMB_LINK}\" alt=\"$BASE\" title=\"$BASE\" width=\"$THUMB_WIDTH\" height=\"$THUMB_HEIGHT\"/></a>"$'\n'
-            PREV_IMAGE=$I
+            local SANS_PATH=${I##*/}
+            local BASE=${SANS_PATH%.*}
+            # Must be kept in sync with quack_helper_imagepage
+            local ILINK="${DEST_FOLDER}/${BASE}.link.html"
+            local TLINK="${DEST_FOLDER}/${BASE}.thumb.html"
+            local HLINK="${DEST_FOLDER}/${BASE}.hist.html"
+            local ILIST_HTML="${ILIST_HTML}`cat \"$ILINK\"`"$'\n'
+            local THUMBS_HTML="${THUMBS_HTML}`cat \"$TLINK\"`"$'\n'
+            local HISTOGRAMS_HTML="${HISTOGRAMS_HTML}`cat \"$HLINK\"`"$'\n'
         done
     fi
 
