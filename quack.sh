@@ -23,12 +23,10 @@
 # containing OCR-text from ALTO-files. The views are static HTML pages that
 # can be viewed directly from the file system or through a webserver.
 #
-# Note that the images used for OpenSeadragon are PNG and not tiled, which 
-# makes this script a very poor choice for generating pages for end-users.
-# The focus is fully on QA, there pixel-perfect reproduction is required.
-# The non-tile choice is to minimize storage space.
+# Note that the images used for OpenSeadragon are PNG.
+# The focus is fully on QA, where pixel-perfect reproduction is required.
 #
-# The script upports iterative updates by re-using existing structures when 
+# The script supports iterative updates by re-using existing structures when 
 # source files are added and the script is executed again. The destination
 # folder is fully self-contained and suitable for mounting under a webserver
 # with no access to the original files.

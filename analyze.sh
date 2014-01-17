@@ -16,14 +16,21 @@ fi
 # TODO: If FORCE_HISTOGRAM is true, cached identify-files should be deleted
 #       to ensure CROP_PERCENT is used
 
-# Input: image
+# Input: image [destination]
 # Sample: foo.png
 # Produces foo.identify if not already existing.
 # Output: The name of the identity file
 function im_identify() {
     local SRC="$1"
+    if [ -n "$2" ]; then
+        local DEST_FOLDER="$2"
+    else
+        local DEST_FOLDER=$(dirname "$SRC")
+    fi
 
-    local IDENTIFY=${SRC%%.*}.identify
+    local BASE=${SRC##*/}
+    local IDENTIFY=${DEST_FOLDER}/${BASE%%.*}.identify
+
     if [ -f "$IDENTIFY" ]; then
         echo "$IDENTIFY"
         return
@@ -59,13 +66,22 @@ function im_identify() {
 # Output: $PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $ZEROES $HOLES
 function grey_stats() {
     local SRC="$1"
+    if [ -n "$2" ]; then
+        local DEST_FOLDER="$2"
+    else
+        local DEST_FOLDER=$(dirname "$SRC")
+    fi
+
     if [ ! -f "$SRC" ]; then
         echo "grey_stats: The file $SRC does not exist in `pwd`"
         return
     fi
 
-    local IDENTIFY=$(im_identify "$SRC")
-    local GREY=${SRC%%.*}.grey
+    local IDENTIFY=$(im_identify "$SRC" "$DEST_FOLDER")
+
+    local BASE=${SRC##*/}
+    local GREY=${DEST_FOLDER}/${BASE%%.*}.grey
+
     local INFO=`cat "$IDENTIFY"`
     # TODO: No good as the histogram data might be much less than 256
     local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
