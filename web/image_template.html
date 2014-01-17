@@ -112,6 +112,7 @@ ALTO-PC: ${ACCURACY}%
 ${ALTO_ELEMENTS_HTML}
 </div>
 
+`if [ ! -n "${PRESENTATION_TILE_SOURCES}" ]; then echo "<!--" ; fi`
 <h2>Presentation preview</h2>
 <p>Downscaled to 150DPI source equivalent, leveled, unsharpened and stored as JPEG.</p>
 <div id="presentation-display" class="openseadragon">
@@ -127,6 +128,7 @@ ${ALTO_ELEMENTS_HTML}
       ${PRESENTATION_TILE_SOURCES}
     }});
 </script>
+`if [ ! -n "${PRESENTATION_TILE_SOURCES}" ]; then echo "-->" ; fi`
 
 <h2>Full histogram data</h2>
 <pre>
