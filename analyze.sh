@@ -96,7 +96,7 @@ function grey_stats() {
     
     local UNIQUE=`echo "$RAW_VALUES" | wc -l`
 
-#    local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
+    local FIRST_REAL_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
 
     if [ ! "1,1,1" == ".$BLOWN_BLACK_BT" ]; then
         # TODO: Add skipping based on BLOWN_BLACK_WT
@@ -127,7 +127,7 @@ function grey_stats() {
     local LAST_GREY=`echo "$RAW_VALUES" | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
 
     local ZEROES=$((256-UNIQUE))
-    local SPAN=$((LAST_GREY-FIRST_GREY+1))
+    local SPAN=$((LAST_GREY-FIRST_REAL_GREY+1))
     local EDGE=$((256-SPAN))
     local HOLES=$((ZEROES-EDGE))
 

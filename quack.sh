@@ -84,7 +84,7 @@ export PAGE_THREADS=8
 
 # For production it is recommended that all FORCE_ options are set to "false" as
 # it makes iterative updates fast. If quack settings are tweaked, the relevant
-# FORCE_ options should be "true".
+# FORCE_ options should be temporarily "true" until quack has been run once.
 
 # If true, image-pages will be generated even if they already exists.
 export FORCE_PAGES=false
