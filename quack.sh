@@ -387,7 +387,7 @@ function makeImages() {
 
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
-    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES}"; then
+    if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES})"; then
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
     fi
 
