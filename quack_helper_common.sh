@@ -68,18 +68,34 @@ export -f deleteCount
 #addGetCounter $L
 
 # Skips the given number of lines and returns the rest
+# If negative lines are given, the end is skipped
 # Input: string lines
 function skipLines() {
     local TEXT="$1"
     local SKIP="$2"
- 
+
+    if [ 0 -eq $SKIP ]; then
+        echo ""
+        return
+    fi
+
+    if [ $SKIP -le 0 ]; then
+        local TAIL=true
+        local SKIP=$(((-1)*$SKIP))
+    else
+        local TAIL=false
+    fi
+
     local LENGTH=`echo "$TEXT" | wc -l`
     if [ $LENGTH -le $SKIP ]; then
         echo ""
         return
     fi
-    echo "$TEXT" | tail -n $((LENGTH-SKIP))
-
+    if [ "true" == "$TAIL" ]; then
+        echo "$TEXT" | head -n $((LENGTH-SKIP))
+    else
+        echo "$TEXT" | tail -n $((LENGTH-SKIP))
+    fi
 }
 export -f skipLines
 

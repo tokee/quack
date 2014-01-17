@@ -98,6 +98,7 @@ function grey_stats() {
 
     local FIRST_REAL_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
 
+    local UNIQUE_DARKS=0
     if [ ! "1,1,1" == ".$BLOWN_BLACK_BT" ]; then
         # TODO: Add skipping based on BLOWN_BLACK_WT
         local FIRST_COUNT=0
@@ -111,6 +112,7 @@ function grey_stats() {
             local G=`echo "$E" | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
 #            echo "c:$C g:$G t:$MAXG"
             if [ "$G" -lt "$MAXG" ]; then
+                local UNIQUE_DARKS=$((UNIQUE_DARKS+1))
                 local FIRST_COUNT=$((FIRST_COUNT+$C))
                 local LAST_VALID=$G
             fi
@@ -118,6 +120,13 @@ function grey_stats() {
         local FIRST_GREY="0-$LAST_VALID"
         #local FIRST_GREY=`echo "$E" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
     else
+        local UNIQUE_DARKS=1
+        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+        local FIRST_COUNT=`echo "$RAW_VALUES" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    fi
+    if [ 0 -eq "$FIRST_COUNT" ]; then
+        # No pixels from 0-fuzzy_factor
+        local UNIQUE_DARKS=1
         local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
         local FIRST_COUNT=`echo "$RAW_VALUES" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
     fi
@@ -130,9 +139,13 @@ function grey_stats() {
     local SPAN=$((LAST_GREY-FIRST_REAL_GREY+1))
     local EDGE=$((256-SPAN))
     local HOLES=$((ZEROES-EDGE))
-
-    local SPIKE_COUNT=`echo "$RAW_VALUES" | sort -n | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local SPIKE_GREY=`echo "$RAW_VALUES" | sort -n | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    
+    # TODO: Also remove lightest
+    local REDUCED=`skipLines "$RAW_VALUES" $UNIQUE_DARKS`
+    local REDUCED=`skipLines "$REDUCED" -1`
+    local SPIKE_LINE=`echo "$REDUCED" | sort -n | tail -n 1`
+    local SPIKE_COUNT=`echo "$SPIKE_LINE" | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
+    local SPIKE_GREY=`echo "$SPIKE_LINE" | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
 
     local GEOMETRY=`echo $INFO | grep "Geometry: [0-9]\\+x[0-9]\\+" | grep -o "[0-9]\\+x[0-9]\\+"`
     local X=`echo $GEOMETRY | grep -o "[0-9]\\+x" | grep -o "[0-9]\\+"`
