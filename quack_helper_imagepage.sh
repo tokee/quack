@@ -3,6 +3,7 @@
 # Get helper functions
 pushd `dirname $0` > /dev/null
 source "analyze.sh"
+source "quack_helper_common.sh"
 popd > /dev/null
 
 # TODO: Double-defined in quack.sh. Move to common script
@@ -281,8 +282,8 @@ function makePreviewPage() {
     if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
     fi
-    
-    CREATED_PAGES=$((CREATED_PAGES+1))
+
+    local CREATED_PAGES=`addGetCounter $PAGE_COUNTER`
     echo " - ${P##*/} (${CREATED_PAGES}/${TOTAL_IMAGES})"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"

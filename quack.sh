@@ -172,7 +172,7 @@ OSD_DIRECT="http://github.com/openseadragon/openseadragon/releases/download/v1.0
 
 START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
-ROOT=`pwd`
+export ROOT=`pwd`
 
 if [ -e "quack.settings" ]; then
     echo "Sourcing user settings from quack.settings in `pwd`"
@@ -180,6 +180,7 @@ if [ -e "quack.settings" ]; then
 fi
 # functions for generating identify-files and extract greyscale statistics
 source "analyze.sh"
+source "quack_helper_common.sh"
 export PAGE_SCRIPT="`pwd`/quack_helper_imagepage.sh"
 popd > /dev/null
 
@@ -208,20 +209,9 @@ export THUMB_TEMPLATE="$ROOT/web/thumb_template.html"
 export HIST_TEMPLATE="$ROOT/web/histogram_template.html"
 DRAGON="openseadragon.min.js"
 
-export IMAGE_COUNTER="$ROOT/quack.imagecounter.temp.$$"
-export HIST_COUNTER="$ROOT/quack.histogramcounter.temp.$$"
-export TEMPDIR_LOCK="$ROOT/quack.lock.$$"
-export TEMPDIR_HIST_LOCK="$ROOT/quack.hist.lock.$$"
-if [ -d $TEMPDIR_LOCK ]; then
-    echo "Removing hopefully stale lock folder $TEMPDIR_LOCK"
-    rm -rf $TEMPDIR_LOCK $IMAGE_COUNTER
-fi
-if [ -d $TEMPDIR_HIST_LOCK ]; then
-    echo "Removing hopefully stale lock folder $TEMPDIR_HIST_LOCK"
-    rm -rf $TEMPDIR_HIST_LOCK $HIST_COUNTER
-fi
-echo "0" > $IMAGE_COUNTER
-echo "0" > $HIST_COUNTER
+export PAGE_COUNTER=`createCounter page 0`
+export IMAGE_COUNTER=`createCounter image 0`
+export HIST_COUNTER=`createCounter histogram 0`
 
 function usage() {
     echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
@@ -393,19 +383,7 @@ function makeImages() {
         exit
     fi
 
-    # This is multi threaded so we need to synchronize the counter update
-    # and we need to use a file to holde the counter as environment variables
-    # are not updated across threads. Rather ugly.
-    # http://stackoverflow.com/questions/8231847/bash-script-to-count-number-of-times-script-has-run
-    mkdir $TEMPDIR_LOCK 2> /dev/null
-    while [[ $? -ne 0 ]] ; do
-        sleep 0.1
-        mkdir $TEMPDIR_LOCK 2> /dev/null
-    done
-    CREATED_IMAGES=`cat $IMAGE_COUNTER`
-    CREATED_IMAGES=$((CREATED_IMAGES+1))
-    echo "$CREATED_IMAGES" > $IMAGE_COUNTER
-    rm -rf $TEMPDIR_LOCK
+    local CREATED_IMAGES=`addGetCounter $IMAGE_COUNTER`
 
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
@@ -499,19 +477,7 @@ function makeHistograms() {
         exit
     fi
 
-    # This is multi threaded so we need to synchronize the counter update
-    # and we need to use a file to holde the counter as environment variables
-    # are not updated across threads. Rather ugly.
-    # http://stackoverflow.com/questions/8231847/bash-script-to-count-number-of-times-script-has-run
-    mkdir $TEMPDIR_HIST_LOCK 2> /dev/null
-    while [[ $? -ne 0 ]] ; do
-        sleep 0.1
-        mkdir $TEMPDIR_HIST_LOCK 2> /dev/null
-    done
-    local CREATED_HIST=`cat $HIST_COUNTER`
-    local CREATED_HIST=$((CREATED_HIST+1))
-    echo "$CREATED_HIST" > $HIST_COUNTER
-    rm -rf $TEMPDIR_HIST_LOCK
+    local CREATED_HIST=`addGetCounter $HIST_COUNTER`
 
     if [ "png" == ${IMAGE_DISP_EXT} ]; then
         # PNG is fairly fast to decode so use that as source
@@ -531,69 +497,6 @@ function makeHistograms() {
     fi
 }
 export -f makeHistograms
-
-# Generates overlays for the stated block and updates idnext & idprev
-# altoxml (newlines removed) tag class
-# Output (addition): IDNEXTS IDPREVS OVERLAYS OCR_CONTENT
-function processElements() {
-    local ALTOFLAT=$1
-    local TAG=$2
-    local CLASS=$3
-
-#    echo "processGenericOverlay <altoflat> $TAG $CLASS"
-    # Insert newlines before </$TAG>
-    ELEMENTS=`echo $ALTOFLAT | sed "s/<$TAG/\\n<$TAG/g" | grep "<$TAG"`
-#    local ELEMENTS=`echo $ALTOFLAT | sed "s/<\/$TAG>/<\/$TAG>\\n/g"`
-    local SAVEIFS=$IFS
-    IFS=$(echo -en "\n\b")
-    # http://mywiki.wooledge.org/BashFAQ/001
-    while IFS= read -r B
-    do
-#        echo -n "."
-#    for B in $ELEMENTS ; do
-        local BTAG=`echo "$B" | grep -o "<$TAG[^>]\+>"`
-        local BID=`echo $BTAG | sed 's/.*ID=\"\([^"]\+\)".*/\\1/g'`
-        if [ "." == ".$BID" ]; then
-            continue
-        fi
-        local BIDNEXT=`echo $BTAG | sed 's/.*IDNEXT=\"\([^"]\+\)".*/\\1/g'`
-        if [ "." != ".$BIDNEXT" -a "$BTAG" != "$BIDNEXT" ]; then
-            local PRE_ART=`echo "$BIDNEXT" | grep -o "^ART"`
-            if [ ".true" == ".$SKIP_NEXT_ART" ]; then
-                if [ ".ART" == ".$PRE_ART" ]; then
-                    BIDNEXT=""
-                fi
-            fi
-            IDNEXTS="${IDNEXTS}nexts[\"${BID}\"] = \"$BIDNEXT\";"$'\n'
-            IDPREVS="${IDPREVS}prevs[\"${BIDNEXT}\"] = \"$BID\";"$'\n'
-        fi
-        local BHEIGHT=`echo $BTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
-        local BWIDTH=`echo $BTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
-        local BHPOS=`echo $BTAG | sed 's/.*HPOS=\"\([^"]\+\)".*/\\1/g'`
-        local BVPOS=`echo $BTAG | sed 's/.*VPOS=\"\([^"]\+\)".*/\\1/g'`
-        
-        local SWIDTH=`echo "scale=6;$BWIDTH/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
-        # TODO: Seems like there is some mismatch going on here with some deliveries
-        local SHEIGHT=`echo "scale=6;$BHEIGHT/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
-#        SHEIGHT=`echo "scale=6;$BHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
-        local SHPOS=`echo "scale=6;$BHPOS/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
-        local SVPOS=`echo "scale=6;$BVPOS/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
-
-        # Special handling of TextBlock
-        if [ "TextBlock" == "$TAG" ]; then
-            BCONTENT=`echo "$B" | grep -o 'CONTENT="[^"]\+"' | sed 's/CONTENT="\\([^"]\\+\\)"/\\1/g' | sed ':a;N;$!ba;s/\\n/ /g' | sed 's/\\\\/\\\\\\\\/g'`
-            # TODO: Handle entity-escaped content as well as quotes and backslash
-            OCR_CONTENT="${OCR_CONTENT}ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
-#            echo "ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
-        fi
-
-        OVERLAYS="${OVERLAYS}    {id: '$BID',"$'\n'
-        OVERLAYS="${OVERLAYS}      x: $SHPOS, y: $SVPOS, width: $SWIDTH, height: $SHEIGHT,"$'\n'
-        OVERLAYS="${OVERLAYS}      className: '$CLASS'"$'\n'
-        OVERLAYS="${OVERLAYS}    },"$'\n'
-    done <<< "$ELEMENTS"
-    IFS=$SAVEIFS
-}
 
 # Input: up parent srcFolder dstFolder
 #
@@ -728,10 +631,10 @@ echo "Quack starting at `date`"
 copyFiles
 pushd "$SOURCE" > /dev/null
 export TOTAL_IMAGES=`ls -R $IMAGE_GLOB 2> /dev/null | wc -l`
-CREATED_PAGES=0
-export CREATED_IMAGES=0
 popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
-rm -r $IMAGE_COUNTER $HIST_COUNTER
+deleteCount $PAGE_COUNTER
+deleteCount $IMAGE_COUNTER
+deleteCount $HIST_COUNTER
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
