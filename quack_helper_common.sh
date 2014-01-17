@@ -57,7 +57,7 @@ function deleteCount() {
     if [ -d "$LOCKNAME" ]; then
         rm -r "$LOCKNAME"
     fi
-    if [ -d "$COUNTFILE" ]; then
+    if [ -f "$COUNTFILE" ]; then
         rm -r "$COUNTFILE"
     fi
 }
