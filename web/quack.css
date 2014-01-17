@@ -79,6 +79,10 @@ div.openseadragon-canvas canvas {
     image-rendering:-webkit-optimize-contrast; /* Chrome (and eventually Safari) */
     -ms-interpolation-mode:nearest-neighbor;   /* IE8+                           */
 }
+div.passive {
+    pointer-events: none;    
+    outline: 10px dashed red;
+}
 
 #gridbox {
     position: absolute;

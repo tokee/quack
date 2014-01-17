@@ -189,7 +189,7 @@ function addResultBox(boxData) {
 // 0.036886,0.740071 0.898778x0.108414 I BYEN MED DE KENDTE
 function addResultBoxes() {
     var results = getRes();
-    document.title = document.title + ' ' + results + ' (length ' + results.length + ')';
+//    document.title = document.title + ' ' + results + ' (length ' + results.length + ')';
     for (var i = 0; i < results.length; i++) {
         addResultBox(results[i]);
     }
@@ -202,7 +202,11 @@ function colorGroups() {
     for (var i = 0; i < myDragon.overlays.length; i++) {
         var id = myDragon.overlays[i].id;
         var element = document.getElementById(id);
-  
+        if (element == null) {
+            console.log('Unable to get element with id ' + id);
+            continue;
+        }
+
   //      element.className = element.className + ' g' + count;
  //       count++;
  //       continue;
@@ -222,7 +226,7 @@ function setupJS() {
     toggleGrid();
     toggleTextBlock();
     toggleBlown();
-    addResultBoxes();
+//    addResultBoxes();
 
     // Create a callback for eack overlay with the overlay-ID as argument
     for (var i = 0; i < myDragon.overlays.length; i++) {
@@ -243,6 +247,18 @@ function setupJS() {
         canvases[i].style.imageRendering = "-moz-crisp-edges";
         canvases[i].getContext.mozImageSmoothingEnabled = false;
     }
+
+    // Enable interaction with OpenSeadragon
+    var content = document.getElementsByClassName('passive');
+    for (var i = 0 ; i < content.length ; i++) {
+        content[i].className = content[i].className.replace(' passive', '');
+    }    
 }
-window.onload=setupJS;
+function setupJSDelay() {
+    // We need to have the OpenSeadragon overlays in place
+    // TODO: Make this a callback from OpenSeadragon instead
+    window.setTimeout(setupJS, 500);
+}
+//window.onload=setupJS;
+window.onload=setupJSDelay;
 
