@@ -17,6 +17,8 @@ Enhanced <a href="http://www.loc.gov/standards/alto/">ALTO</a>-viewer for Qualit
 
 <h2>Features</h2>
 
+
+<h3>Single page display</h3>
 <ul>
   <li>Smooth zoom & pan of large images thanks to OpenSeadragon</li>
   <li>Marking of blown highlights &amp; lowlights by colored overlays</li>
@@ -24,8 +26,14 @@ Enhanced <a href="http://www.loc.gov/standards/alto/">ALTO</a>-viewer for Qualit
   <li>Color coded groups of segments</li>
   <li>Interactive inspection of OCR</li>
   <li>Grid lines for checking skewing and rotation</li>
-  <li>Folder overview with thumbnails, histograms and blown highlights &amp; lowlights</li>
   <li>Histograms with burnout statistics</li>
+</ul>
+
+<h3>Aggregated display (aka folder view)</h3>
+<ul>
+  <li>Thumbnails and histograms for all images</li>
+  <li>Marking of blown highlights &amp; lowlights by colored overlays</li>
+  <li>Column-sortable table with selected stats, such as dark percentage, OCR recognition rate and holes in histograms</li>
 </ul>
 
 <h2>Demo (thanks for hosting, GitHub)</h2>
@@ -37,22 +45,26 @@ Enhanced <a href="http://www.loc.gov/standards/alto/">ALTO</a>-viewer for Qualit
 
 <h2>Requirements</h2>
 
+<p>Quack is developed and tested exclusively under Linux. It should work under OS&nbsp;X and it might be possible to run it under Windows with <a href="http://www.cygwin.com/">Cygwin</a>.</p>
+
 <ul>
   <li>A minimum of 2GB free RAM for processing of 30MP scans</li>
+  <li>A suitable beefy browser equipped machine for display; depending on image sizes and ALTO complexity</li>
   <li>bash</li>
   <li><a href="http://www.graphicsmagick.org/">GraphicsMagic</a></li>
   <li><a href="http://www.imagemagick.org">ImageMagick</a> (as GraphicsMagic cannot create histograms)</li>
   <li><a href="http://openseadragon.github.io/">OpenSeadragon</a></li>
-  <li>A suitable beefy browser equipped machine for display, depending on image sizes and ALTO complexity</li>
   <li><a href="http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom">deepzoom</a> (only if tile based display is enabled)</li>
   <li>Perl (required by deepzoom)</li>
 </ul>
 
 <h2>Verbiage</h2>
 <p>
-This is basically a simple bash script that grew to 600+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creating TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
+Quack is basically a simple bash script that grew to 1700+ lines. It works on a collection of images with corresponding ALTO-files with OCR and segmentation markup. It creates a HTML page for each image and uses the relevant parts of the ALTO files for creating TextBlock overlays with OCR inspection. No webserver is required as the pages can be used directly from the file system.
 </p><p>
 It can be quite heavy for the browser to display large images with OpenSeadragon,  when there is a lot of ALTO-derived overlays. This is especially true if tiling is not used. Display has been tested with Firefox & Chrome. Chrome was markedly faster as of 2013-09-17.
+</p><p>
+The name <em>Quack</em> is a play on QA (Quality Assurance) and quack (the doctor was a quack), signifying that it is at heart a hack run wild. It it also the sound a duck makes.
 </p>
 
 <h2>Development</h2>
