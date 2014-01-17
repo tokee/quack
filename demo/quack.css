@@ -3,8 +3,12 @@ body {
 	color: #000;
 	background: none #F5DEB3;
 	font-family: verdana, sans-serif;
+        padding: 0 1em 0.5em 1em;
 }
-h1, h2, h3, h4, h5, h6 { margin-bottom: 0.2em; }
+h1, h2, h3, h4, h5, h6 { 
+    margin-bottom: 0.2em; 
+    clear: both;
+}
 h1						 	{ color: #32611F }
 h2, h3, h4, h5, h6 	{ color: #1F3D14; }
 p 							{ margin-top: 0px; }
@@ -133,8 +137,9 @@ div.openseadragon-canvas canvas {
 .highlight:hover, .highlight:focus {
 /*    filter:     alpha(opacity=70);
     opacity:    0.7;*/
-/*    margin: -10px;
-    border:     10px solid #0000FF;*/
+    margin: -10px;
+    border:  10px solid #000088;
+    outline: 2px solid #000000;
 }
 
 /* All elements in a selected group */
@@ -244,6 +249,32 @@ div.thumbs a, div.histograms a {
 .histograms {
     display: none;
 }
+table.imagelinks {
+    border: 1px solid black;
+}
+table.imagelinks, table.imagelinks tr td, table.imagelinks tr th {
+    border-collapse: collapse;
+}
+table.imagelinks tr td, table.imagelinks tr th {
+    padding: 0.2em 0.4em 0.2em 0.4em;
+    border: none;
+}
+table.imagelinks tr th {
+    background: #C5AE93;
+}
+table.imagelinks tbody tr:nth-child(2n+1) td {
+  background: #FFEEC3;
+}
+table.imagelinks th
+{
+    text-align:left;
+}
+
+table.imagelinks td + td,
+table.imagelinks th + th
+{
+    text-align:right
+}
 
 
 /* Linked articles on image page */
@@ -261,7 +292,7 @@ div.thumbs a, div.histograms a {
 .g10 { background-color: #FFFFAA; }
 .g11 { background-color: #AAFFFF; }
 .g12 { background-color: #FFAAFF; }
-.
+
 .g13 { background-color: #FF00AA; }
 .g14 { background-color: #00FFAA; }
 .g15 { background-color: #00AAFF; }
@@ -272,7 +303,7 @@ div.thumbs a, div.histograms a {
 .g19 { background-color: #FFFF55; }
 .g20 { background-color: #55FFFF; }
 .g21 { background-color: #FF55FF; }
-.
+
 .g22 { background-color: #FF0055; }
 .g23 { background-color: #00FF55; }
 .g24 { background-color: #0055FF; }

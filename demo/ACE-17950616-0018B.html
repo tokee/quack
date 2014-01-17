@@ -52,12 +52,12 @@ prevs["ART5-2"] = "ART5-1";
 
 <p class="histogram"><img src= "ACE-17950616-0018B.histogram.png" width="256" height="200" alt="histogram"/></p>
 <p class="greystats">
-Dark (1,1,1): 0.40%<br/>
-Spike (235,235,235): 5.85%<br/>
-Light (253,253,253): 0.01%<br/>
-Unique greyscale values: 251<br/>
-Histogram holes: 2<br/>
-ALTO-PC: 88.549400%
+Dark 0-0: 8.23%<br/>
+Spike (0,0,0): 8.23%<br/>
+Light (255,255,255): 0.03%<br/>
+Unique greyscale values: 256<br/>
+Histogram holes: 0<br/>
+ALTO-PC: 88.54%
 <p><input type="checkbox" id="toggle_grid" onClick="toggleGrid();">Grid</input></p>
 <p><input type="checkbox" id="toggle_textblock" checked="checked" onClick="toggleTextBlock();">TextBlocks</input></p>
 <p><input type="checkbox" id="toggle_blown" onClick="toggleBlown();">Black/white</input></p>
@@ -121,7 +121,7 @@ ALTO-PC: 88.549400%
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-            Image: {        xmlns:    "http://schemas.microsoft.com/deepzoom/2008",        Url:      "ACE-17950616-0018B_files/",        Format:   "png",        Overlap:  "4",        TileSize: "256",        Size: {          Width:  "915",          Height: "1093"        }      }
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0018B.png',          width:  915,          height: 1093        }      ]
 
     },
     overlays: [
@@ -188,17 +188,13 @@ ALTO-PC: 88.549400%
 
 <!-- TODO: Create decent bread crumbs -->
 <p>Parent folder: <a href="index.html"></a></p>
-<p>Source: /home/te/projects/quack/samples/ACE-17950616-0018B.jpg (172 KB)</p>
+<p>Source: /home/te/projects/quack/samples/ACE-17950616-0018B.jpg (172 KB, 1.0 MP)</p>
 <p>Direct: <a href="ACE-17950616-0018B.png">ACE-17950616-0018B.png</a></p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
 <p>Source: <a href="ACE-17950616-0018B.alto.xml">ACE-17950616-0018B.alto.xml</a></p>
 <table class="altoelements"><tr><th>Key</th> <th>Value</th></tr>
-<tr><td>processingDateTime</td> <td>2013-07-16T10:59:23</td></tr>
-<tr><td>processingDateTime</td> <td>2013-07-16T10:59:23</td></tr>
-<tr><td>softwareName</td> <td>ABBYY Recognition Server</td></tr>
-<tr><td>softwareName</td> <td>NSExport</td></tr>
 </table>
 
 </div>
@@ -215,17 +211,21 @@ ALTO-PC: 88.549400%
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-      
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0018B.presentation.jpg',          width:  458,          height: 547        }      ]
+
     }});
 </script>
 
 <h2>Full histogram data</h2>
 <pre>
+     82362: (  0,  0,  0) #000000 black
       4005: (  1,  1,  1) #010101 rgb(1,1,1)
       3954: (  2,  2,  2) #020202 rgb(2,2,2)
       3697: (  3,  3,  3) #030303 grey1
+      3495: (  4,  4,  4) #040404 rgb(4,4,4)
       3500: (  5,  5,  5) #050505 grey2
       3073: (  6,  6,  6) #060606 rgb(6,6,6)
+      2899: (  7,  7,  7) #070707 rgb(7,7,7)
       2786: (  8,  8,  8) #080808 grey3
       2580: (  9,  9,  9) #090909 rgb(9,9,9)
       2470: ( 10, 10, 10) #0A0A0A grey4
@@ -472,14 +472,11 @@ ALTO-PC: 88.549400%
        293: (251,251,251) #FBFBFB rgb(251,251,251)
        195: (252,252,252) #FCFCFC grey99
        170: (253,253,253) #FDFDFD rgb(253,253,253)
-  Colormap: 256
-         0: (  0,  0,  0) #000000 black
-         1: (  1,  1,  1) #010101 rgb(1,1,1)
-         2: (  2,  2,  2) #020202 rgb(2,2,2)
-         3: (  3,  3,  3) #030303 grey1
+       149: (254,254,254) #FEFEFE rgb(254,254,254)
+       378: (255,255,255) #FFFFFF white
 </pre>
 
-<p>Generated 2014-01-09 23:38</p>
+<p>Generated 2014-01-17 19:30</p>
 
 </body>
 </html>

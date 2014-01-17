@@ -5,6 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Quack - /home/te/projects/quack/samples</title>
     <link rel="stylesheet" type="text/css" href="quack.css" />
+    <script src="sorttable.js"></script>
     <script src="quack_folder.js"></script>
 </head>
 
@@ -16,25 +17,58 @@
 <p>Parent folder: <a href="../index.html"></a></p>
 
 <div class="images">
-<h2>Pages</h2>
+<h2><a name="linkthumbs">Thumbs</a> (just to <a href="#linktable">table view</a>)</h2>
 <p><input type="checkbox" id="toggle_blown_thumbs" onClick="toggleBlownThumbs();">Show absolute black and white</input><br/><input type="checkbox" id="toggle_histograms" onClick="toggleHistograms();">Histogram view</input></p>
+
 <div class="thumbs"><div class="thumb"><a class="thumblink" href="ACE-17950616-0018B.html"><span class="thumboverlay"></span><img class="thumbimg" src="ACE-17950616-0018B.thumb.jpg" alt="ACE-17950616-0018B" title="ACE-17950616-0018B" width="167" height="200"/></a></div>
 <div class="thumb"><a class="thumblink" href="ACE-17950616-0019A.html"><span class="thumboverlay"></span><img class="thumbimg" src="ACE-17950616-0019A.thumb.jpg" alt="ACE-17950616-0019A" title="ACE-17950616-0019A" width="163" height="200"/></a></div>
 <div class="thumb"><a class="thumblink" href="ACE-17950616-0019B.html"><span class="thumboverlay"></span><img class="thumbimg" src="ACE-17950616-0019B.thumb.jpg" alt="ACE-17950616-0019B" title="ACE-17950616-0019B" width="169" height="200"/></a></div>
 </div>
-<div class="histograms"><ul>
-<div class="histograminfolder"><a href="ACE-17950616-0018B.html"><img src="ACE-17950616-0018B.histogram.png" alt="Histogram for ACE-17950616-0018B" title="Histogram for ACE-17950616-0018B" width="256" height="200"/></a></div>
+
+<div class="histograms"><div class="histograminfolder"><a href="ACE-17950616-0018B.html"><img src="ACE-17950616-0018B.histogram.png" alt="Histogram for ACE-17950616-0018B" title="Histogram for ACE-17950616-0018B" width="256" height="200"/></a></div>
 <div class="histograminfolder"><a href="ACE-17950616-0019A.html"><img src="ACE-17950616-0019A.histogram.png" alt="Histogram for ACE-17950616-0019A" title="Histogram for ACE-17950616-0019A" width="256" height="200"/></a></div>
 <div class="histograminfolder"><a href="ACE-17950616-0019B.html"><img src="ACE-17950616-0019B.histogram.png" alt="Histogram for ACE-17950616-0019B" title="Histogram for ACE-17950616-0019B" width="256" height="200"/></a></div>
 </div>
-<div class="imagelinks">
-<ul>
-<li><a href="ACE-17950616-0018B.html">ACE-17950616-0018B</a></li>
-<li><a href="ACE-17950616-0019A.html">ACE-17950616-0019A</a></li>
-<li><a href="ACE-17950616-0019B.html">ACE-17950616-0019B</a></li>
-</ul>
+<!-- http://www.kryogenix.org/code/browser/sorttable/ -->
 
-</div>
+<h2><a name="linktable">Image list</a> (just to <a href="#linkthumbs">thumb view</a>)</h2>
+<div class="imagelinks"><table class="imagelinks sortable"><tr><th>Image</th> <th>Dark</th> <th>Spike</th> <th>Light</th> <th>Unique</th> <th>Holes</th> <th>OCR</th> <th>KB</th> <th>MP</th></tr>
+<tr>
+  <td><a href="ACE-17950616-0018B.html">ACE-17950616-0018B</a></td> 
+  <td>8.23%</td>
+  <td>8.23%</td>
+  <td>0.03%</td>
+  <td>256</td>
+  <td>0</td>
+  <td>88.54%</td>
+  <td>172</td>
+  <td>1.0</td>
+</tr>
+<tr>
+  <td><a href="ACE-17950616-0019A.html">ACE-17950616-0019A</a></td> 
+  <td>7.49%</td>
+  <td>7.49%</td>
+  <td>0.13%</td>
+  <td>256</td>
+  <td>0</td>
+  <td>86.73%</td>
+  <td>204</td>
+  <td>1.0</td>
+</tr>
+<tr>
+  <td><a href="ACE-17950616-0019B.html">ACE-17950616-0019B</a></td> 
+  <td>6.63%</td>
+  <td>6.63%</td>
+  <td>0.09%</td>
+  <td>256</td>
+  <td>0</td>
+  <td>89.07%</td>
+  <td>204</td>
+  <td>0.9</td>
+</tr>
+
+</table></div>
+
 </div>
 
 <div class="subfolders">
@@ -49,7 +83,7 @@
 <p class="warning">No edition</p>
 </div>
 
-<p>Generated 2014-01-09 23:38</p>
+<p>Generated 2014-01-17 19:30</p>
 
 </body>
 </html>

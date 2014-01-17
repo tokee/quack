@@ -21,19 +21,19 @@ ocrs["BLOCK6"] = "Formedelst den store ulykkelige IldSvaabe er Zn^eerkam« meret
 <body class="previewpage">
 <h1>Quack <span style="color: #999">ACE-17950616-0019B.jpg</span></h1>
 
-<div class="imagesnippet">Foldertest</div>
+<div class="imagesnippet"></div>
 
 <div id="controlpanel" class="control">
 <p class="navigation"><a href="ACE-17950616-0019A.html">previous</a> | <a href="index.html">up</a> | next</p>
 
 <p class="histogram"><img src= "ACE-17950616-0019B.histogram.png" width="256" height="200" alt="histogram"/></p>
 <p class="greystats">
-Dark (0,0,0): 6.63%<br/>
+Dark 0-0: 6.63%<br/>
 Spike (0,0,0): 6.63%<br/>
 Light (255,255,255): 0.09%<br/>
 Unique greyscale values: 256<br/>
 Histogram holes: 0<br/>
-ALTO-PC: 89.072300%
+ALTO-PC: 89.07%
 <p><input type="checkbox" id="toggle_grid" onClick="toggleGrid();">Grid</input></p>
 <p><input type="checkbox" id="toggle_textblock" checked="checked" onClick="toggleTextBlock();">TextBlocks</input></p>
 <p><input type="checkbox" id="toggle_blown" onClick="toggleBlown();">Black/white</input></p>
@@ -97,7 +97,7 @@ ALTO-PC: 89.072300%
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-            Image: {        xmlns:    "http://schemas.microsoft.com/deepzoom/2008",        Url:      "ACE-17950616-0019B_files/",        Format:   "png",        Overlap:  "4",        TileSize: "256",        Size: {          Width:  "909",          Height: "1075"        }      }
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0019B.png',          width:  909,          height: 1075        }      ]
 
     },
     overlays: [
@@ -124,17 +124,13 @@ ALTO-PC: 89.072300%
 
 <!-- TODO: Create decent bread crumbs -->
 <p>Parent folder: <a href="index.html"></a></p>
-<p>Source: /home/te/projects/quack/samples/ACE-17950616-0019B.jpg (204 KB)</p>
+<p>Source: /home/te/projects/quack/samples/ACE-17950616-0019B.jpg (204 KB, 0.9 MP)</p>
 <p>Direct: <a href="ACE-17950616-0019B.png">ACE-17950616-0019B.png</a></p>
 
 <div class="alto">
 <h2>ALTO XML</h2>
 <p>Source: <a href="ACE-17950616-0019B.alto.xml">ACE-17950616-0019B.alto.xml</a></p>
 <table class="altoelements"><tr><th>Key</th> <th>Value</th></tr>
-<tr><td>processingDateTime</td> <td>2013-07-16T11:00:13</td></tr>
-<tr><td>processingDateTime</td> <td>2013-07-16T11:00:13</td></tr>
-<tr><td>softwareName</td> <td>ABBYY Recognition Server</td></tr>
-<tr><td>softwareName</td> <td>NSExport</td></tr>
 </table>
 
 </div>
@@ -151,7 +147,8 @@ ALTO-PC: 89.072300%
     showNavigator:  false,
     wrapHorizontal: false,
     tileSources: {
-      
+            type: 'legacy-image-pyramid',      levels:[        {          url: 'ACE-17950616-0019B.presentation.jpg',          width:  455,          height: 538        }      ]
+
     }});
 </script>
 
@@ -415,7 +412,7 @@ ALTO-PC: 89.072300%
        971: (255,255,255) #FFFFFF white
 </pre>
 
-<p>Generated 2014-01-09 23:38</p>
+<p>Generated 2014-01-17 19:30</p>
 
 </body>
 </html>
