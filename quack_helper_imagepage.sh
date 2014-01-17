@@ -1,11 +1,213 @@
 #!/bin/bash
 
+# Get helper functions
+pushd `dirname $0` > /dev/null
+source "analyze.sh"
+popd > /dev/null
+
+# TODO: Double-defined in quack.sh. Move to common script
+# http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
+# Input: template-file
+function ctemplate() {
+    TMP="`mktemp`.sh"
+    echo 'cat <<END_OF_TEXT' >  $TMP
+    cat  "$1"                >> $TMP
+    echo 'END_OF_TEXT'       >> $TMP
+    . $TMP
+    rm $TMP
+}
+
+# Searches from the root for alternative versions of the given image
+# Very specific to Statsbiblioteket
+# src_folder image
+# Output: ALTERNATIVES_HTML
+function resolveAlternatives() {
+    local SRC_FOLDER="$1"
+    local IMAGE="$2"
+    local FULL="${SRC_FOLDER}/${IMAGE}"
+#    local ID=`echo "$IMAGE" | grep -o "[0-9][0-9][0-9][0-9]-.*"`
+    local ID="${IMAGE%.*}"
+
+    if [ "." == ".$ID" ]; then
+        echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
+        return
+    fi
+
+    pushd "$SOURCE_FULL" > /dev/null
+    ALTERNATIVES_HTML="<ul class=\"alternatives\">"$'\n'
+    for A in `find . -name "*${ID}" | sort`; do
+        # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
+       local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
+       local D="${A%.*}"
+       ALTERNATIVES_HTML="${ALTERNATIVES_HTML}<li><a href=\"${UP}${D}.html\">${LINK}</a></li>"$'\n'
+    done
+    ALTERNATIVES_HTML="${ALTERNATIVES_HTML}</ul>"$'\n'
+    popd > /dev/null
+}
+
+# Generates JavaScript snippet for black and white overlays
+# Input: src
+# Output: OVERLAYS (not terminated with ']')
+function blackWhite() {
+    local SRC="$1"
+    local IMAGE_WIDTH=$2
+    local IMAGE_HEIGHT=$3
+    local REL_HEIGHT=`echo "scale=2;$IMAGE_HEIGHT/$IMAGE_WIDTH" | bc`
+
+    # Special overlays to show absolute black and absolute white pixels
+    # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
+    OVERLAYS="overlays: ["$'\n'
+    OVERLAYS="${OVERLAYS}{id: 'white',"$'\n'
+    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
+    OVERLAYS="${OVERLAYS}  className: 'whiteoverlay'"$'\n'
+    OVERLAYS="${OVERLAYS}},"$'\n'
+    OVERLAYS="${OVERLAYS}{id: 'black',"$'\n'
+    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
+    OVERLAYS="${OVERLAYS}  className: 'blackoverlay'"$'\n'
+    OVERLAYS="${OVERLAYS}},"$'\n'
+}
+
+# Generates overlays for the stated block and updates idnext & idprev
+# altoxml (newlines removed) tag class
+# Output (addition): IDNEXTS IDPREVS OVERLAYS OCR_CONTENT
+function processElements() {
+    local ALTOFLAT=$1
+    local TAG=$2
+    local CLASS=$3
+
+#    echo "processGenericOverlay <altoflat> $TAG $CLASS"
+    # Insert newlines before </$TAG>
+    ELEMENTS=`echo $ALTOFLAT | sed "s/<$TAG/\\n<$TAG/g" | grep "<$TAG"`
+#    local ELEMENTS=`echo $ALTOFLAT | sed "s/<\/$TAG>/<\/$TAG>\\n/g"`
+    local SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    # http://mywiki.wooledge.org/BashFAQ/001
+    while IFS= read -r B
+    do
+#        echo -n "."
+#    for B in $ELEMENTS ; do
+        local BTAG=`echo "$B" | grep -o "<$TAG[^>]\+>"`
+        local BID=`echo $BTAG | sed 's/.*ID=\"\([^"]\+\)".*/\\1/g'`
+        if [ "." == ".$BID" ]; then
+            continue
+        fi
+        local BIDNEXT=`echo $BTAG | sed 's/.*IDNEXT=\"\([^"]\+\)".*/\\1/g'`
+        if [ "." != ".$BIDNEXT" -a "$BTAG" != "$BIDNEXT" ]; then
+            local PRE_ART=`echo "$BIDNEXT" | grep -o "^ART"`
+            if [ ".true" == ".$SKIP_NEXT_ART" ]; then
+                if [ ".ART" == ".$PRE_ART" ]; then
+                    BIDNEXT=""
+                fi
+            fi
+            IDNEXTS="${IDNEXTS}nexts[\"${BID}\"] = \"$BIDNEXT\";"$'\n'
+            IDPREVS="${IDPREVS}prevs[\"${BIDNEXT}\"] = \"$BID\";"$'\n'
+        fi
+        local BHEIGHT=`echo $BTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
+        local BWIDTH=`echo $BTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
+        local BHPOS=`echo $BTAG | sed 's/.*HPOS=\"\([^"]\+\)".*/\\1/g'`
+        local BVPOS=`echo $BTAG | sed 's/.*VPOS=\"\([^"]\+\)".*/\\1/g'`
+        
+        local SWIDTH=`echo "scale=6;$BWIDTH/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
+        # TODO: Seems like there is some mismatch going on here with some deliveries
+        local SHEIGHT=`echo "scale=6;$BHEIGHT/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
+#        SHEIGHT=`echo "scale=6;$BHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
+        local SHPOS=`echo "scale=6;$BHPOS/$PWIDTH*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
+        local SVPOS=`echo "scale=6;$BVPOS/$PHEIGHT*$ALTO_SCALE_FACTOR" | bc | sed 's/^\./0./'`
+
+        # Special handling of TextBlock
+        if [ "TextBlock" == "$TAG" ]; then
+            BCONTENT=`echo "$B" | grep -o 'CONTENT="[^"]\+"' | sed 's/CONTENT="\\([^"]\\+\\)"/\\1/g' | sed ':a;N;$!ba;s/\\n/ /g' | sed 's/\\\\/\\\\\\\\/g'`
+            # TODO: Handle entity-escaped content as well as quotes and backslash
+            OCR_CONTENT="${OCR_CONTENT}ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
+#            echo "ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
+        fi
+
+        OVERLAYS="${OVERLAYS}    {id: '$BID',"$'\n'
+        OVERLAYS="${OVERLAYS}      x: $SHPOS, y: $SVPOS, width: $SWIDTH, height: $SHEIGHT,"$'\n'
+        OVERLAYS="${OVERLAYS}      className: '$CLASS'"$'\n'
+        OVERLAYS="${OVERLAYS}    },"$'\n'
+    done <<< "$ELEMENTS"
+    IFS=$SAVEIFS
+}
+
+# Generates overlayscase 
+# src dest altofile width height
+# Output: ELEMENTS_HTML OVERLAYS OCR_CONTENT IDNEXT_CONTENT FULL_RELATIVE_HEIGHT ACCURACY
+function processALTO() {
+    local SRC="$1"
+    local DEST="$2"
+    local ALTO_FILE="$3"
+    local IMAGE_WIDTH=$4
+    local IMAGE_HEIGHT=$5
+#    local WIDTH=$4
+#    local HEIGHT=$5
+
+    # Used by caller
+    OVERLAYS=""
+    ELEMENTS_HTML=""
+    OCR_CONTENT=""
+    IDNEXT_CONTENT=""
+    FULL_RELATIVE_HEIGHT="1"
+    ACCURACY="N/A"
+
+    local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
+    blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
+    # TODO: Extract relevant elements from the Alto for display
+    if [ ! -f "$ALTO" ]; then
+        # TODO: Better handling of non-existence
+            ELEMENTS_HTML="<p class=\"warning\">No ALTO file at $ALTO</p>"$'\n'
+            # Terminate the black/white overlay and return
+            OVERLAYS="${OVERLAYS}]"
+        return
+    fi
+    
+    cp "$ALTO" "$ALTO_DEST"
+    # Extract key elements from the ALTO
+    local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
+#    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
+    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
+    local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
+    local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo $PTAG | sed 's/.*PC=\"\([^"]\+\)".*/\\1/g'`
+    ACCURACY=`echo "scale=2;x=$ACCURACY*100/1; if(x<1) print 0; x" | bc`
+
+    FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
+    # TODO: Ponder how relative positioning works and why this hack is necessary
+    # Theory #1: OpenSeadragon messes up the vertical relative positioning
+    PHEIGHT=$PWIDTH
+
+    ELEMENTS_HTML="<table class=\"altoelements\"><tr><th>Key</th> <th>Value</th></tr>"$'\n'
+    for E in $ALTO_ELEMENTS; do
+        SAVEIFS=$IFS
+        IFS=$(echo -en "\n\b")
+        for V in `echo "$ALTO_COMPACT" | grep -o "<${E}>[^<]\\+</${E}>"`; do
+            TV=`echo "$V" | sed 's/.*>\(.*\)<.*/\\1/g'`
+            ELEMENTS_HTML="${ELEMENTS_HTML}<tr><td>$E</td> <td>$TV</td></tr>"$'\n'
+        done
+        IFS=$SAVEIFS
+    done
+    ELEMENTS_HTML="${ELEMENTS_HTML}</table>"$'\n'
+
+    OCR_CONTENT=""
+    IDNEXTS=""
+    IDPREVS=""
+
+    # Remove newlines from the ALTO
+    SANS=`cat "$ALTO" | sed ':a;N;$!ba;s/\\n/ /g'`
+
+    processElements "$SANS" "ComposedBlock" "composed"
+    processElements "$SANS" "Illustration" "illustration"
+    processElements "$SANS" "TextBlock" "highlight"
+
+    OVERLAYS="${OVERLAYS}   ]"$'\n'
+}
+
 #
 # Creates a HTML page representing a single image.
 # The image files used by this function must be created (function makeImages) before calling
 # makePreviewPage.
 #
-# Input: up parent srcFolder dstFolder image prev_image next_image
+# Input: up parent srcFolder dstFolder image images
 # Output: PAGE_LINK BASE THUMB_LINK THUMB_WIDTH THUMB_HEIGHT HISTOGRAM_LINK HISTOGRAM_WIDTH HISTOGRAM_HEIGHT ILINK
 function makePreviewPage() {
     local UP="$1"
@@ -13,12 +215,29 @@ function makePreviewPage() {
     local SRC_FOLDER="$3"
     local DEST_FOLDER="$4"
     local IMAGE="$5"
-    local PREV_IMAGE="$6"
-    local NEXT_IMAGE="$7"
+    local IMAGES="$6"
+
+    local PREV_IMAGE=`echo "$IMAGES" | grep -B 1 "$IMAGE" | head -n 1 | grep -v "$IMAGE"`
+    local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$IMAGE" | tail -n 1 | grep -v "$IMAGE"`
 
     local SANS_PATH=${IMAGE##*/}
     BASE=${SANS_PATH%.*}
     P="${DEST_FOLDER}/${BASE}.html"
+
+    # Must be synced with quack.makeImageParams()
+    local SOURCE_IMAGE="${SRC_FOLDER}/${IMAGE}"
+    local DEST_IMAGE="${DEST_FOLDER}/${BASE}.${IMAGE_DISP_EXT}"
+    local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
+    local HISTOGRAM_LINK=${HIST_IMAGE##*/}
+    local THUMB_IMAGE="${DEST_FOLDER}/${BASE}.thumb.jpg"
+    local THUMB_LINK=${THUMB_IMAGE##*/}
+    local WHITE_IMAGE="${DEST_FOLDER}/${BASE}.white.png"
+    local BLACK_IMAGE="${DEST_FOLDER}/${BASE}.black.png"
+    local PRESENTATION_IMAGE="${DEST_FOLDER}/${BASE}.presentation.jpg"
+    local TILE_FOLDER="${DEST_FOLDER}/${BASE}_files"
+    local PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
+    local ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
+
     # Must be kept in sync with quack.makeIndex()
     local ILINK="${DEST_FOLDER}/${BASE}.link.html"
     local TLINK="${DEST_FOLDER}/${BASE}.thumb.html"
@@ -35,7 +254,7 @@ function makePreviewPage() {
     # Used by function caller
     PAGE_LINK="${BASE}.html"
 
-    makeImageParams "$SRC_FOLDER" "$DEST_FOLDER" "$IMAGE"
+#    makeImageParams "$SRC_FOLDER" "$DEST_FOLDER" "$IMAGE"
 
     if [ ! -e "$DEST_IMAGE" ]; then
         echo "The destination image '$DEST_IMAGE' for '$IMAGE' has not been created" >&2
@@ -199,4 +418,4 @@ function makePreviewPage() {
 
 
  }
-export -f makePreviewPage
+makePreviewPage "$@"

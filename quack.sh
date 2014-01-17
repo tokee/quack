@@ -46,17 +46,17 @@
 # override the defaults below.
 
 # The types of images to pull from source
-IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
+export IMAGE_GLOB="*.tiff *.tif *.jp2 *.jpeg2000 *.j2k *.jpg *.jpeg"
 # The extension of the ALTO files corresponding to the image files
 # ALTO files are expected to be located next to the image files:
 #   OurScanProject_batch_2013-09-18_page_007.tif
 #   OurScanProject_batch_2013-09-18_page_007.alto.xml
-ALTO_EXT=".alto.xml"
+export ALTO_EXT=".alto.xml"
 
 # Sometimes the image corresponding to the ALTO has been scaled after ALTO
 # generation. This factor will be multiplied to all ALTO elements. If the
 # image has been scaled to half width & half height, set this to 0.5.
-ALTO_SCALE_FACTOR="1.0"
+export ALTO_SCALE_FACTOR="1.0"
 
 # The image format for the QA image. Possible values are png and jpg.
 # png is recommended if QA should check image quality in detail.
@@ -73,12 +73,16 @@ export THUMB_IMAGE_SIZE="300x200"
 # These elements will be grepped from the ALTO-files and shown on the image pages
 ALTO_ELEMENTS="processingDateTime softwareName"
 
-# Number of threads used for image processing.
-THREADS=4
+# Number of threads used for image processing. CPU and memory bound.
+export THREADS=4
 
-# Number of threads used for histograms.  Note that histogram generation
-# is very memory hungry (~2GB for a 30MP image). Adjust accordingly.
-HISTOGRAM_THREADS=2
+# Number of threads used for histograms. Note that histogram generation
+# is very memory hungry (~2GB for a 30MP image).
+export HISTOGRAM_THREADS=2
+
+# Number of threads used for pages. Page generation uses very little memory and
+# is almost exclusively CPU bound.
+export PAGE_THREADS=8
 
 # For production it is recommended that all FORCE_ options are set to "false" as
 # it makes iterative updates fast. If quack settings are tweaked, the relevant
@@ -106,24 +110,24 @@ export FORCE_TILES=false
 # If true, the script attempts to find all alternative versions of the current image
 # in other folders under source. Suitable for easy switching between alternate scans
 # of the same material.
-RESOLVE_ALTERNATIVES=false
+export RESOLVE_ALTERNATIVES=false
 
 # If the IDNEXT attribute starts with 'ART' it is ignored
 # Used to avoid visually linking everything on the page
-SKIP_NEXT_ART=false
+export SKIP_NEXT_ART=false
 
 # How much of the image to retain, cropping from center, when calculating
 # histograms. Empty value = no crop. Valid values: 1-100
 # This us usable for generating proper histograms for scans where the border
 # is different from the rest of the image. Artifacts from rotations is an example.
 # Suggested values are 85-95%.
-CROP_PERCENT=""
+export CROP_PERCENT=""
 
 # If true, tiles are generated for OpenSeadragon. This requires Robert Barta's 
 # deepzoom (see link in README.md) and will generate a lot of 260x260 pixel tiles.
 # If false, a single image will be used with OpenSeadragon. This is a lot heavier
 # on the browser but avoids the size and file-count overhead of the tiles.
-TILE="false"
+export TILE="false"
 
 # If true, a secondary view of the scans will be inserted into the page.
 # The view represents an end-user version of the scan. This will often be 
@@ -152,16 +156,15 @@ export BLOWN_BLACK_WT=0,0,0
 export SNIPPET_FOLDER=""
 export SNIPPET_IMAGE=""
 
-
 # End default settings. User-supplied overrides will be loaded from quack.settings
 
 # If present in a source-folder, the content of the folder will be inserted into
 # the generated folder HTML file.
-SPECIFIC_FOLDER_SNIPPET="folder.snippet"
+export SPECIFIC_FOLDER_SNIPPET="folder.snippet"
 
 # If a file with image basename + this extension is encountered, the content will
 # be inserted into the generated image HTML file.
-SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
+export SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
 
 # If no OpenSeadragon is present, the scripts attempts to download this version.
 OSD_ZIP="openseadragon-bin-1.0.0.zip"
@@ -177,7 +180,7 @@ if [ -e "quack.settings" ]; then
 fi
 # functions for generating identify-files and extract greyscale statistics
 source "analyze.sh"
-source quack_helper_imagepage.sh
+export PAGE_SCRIPT="`pwd`/quack_helper_imagepage.sh"
 popd > /dev/null
 
 # Local settings overrides general settings
@@ -198,11 +201,11 @@ if [ -f "$START_PATH/presentation.sh" ]; then
     echo "Using presentation.sh located in $START_PATH"
     PRESENTATION_SCRIPT="$START_PATH/presentation.sh"
 fi
-FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
-IMAGE_TEMPLATE="$ROOT/web/image_template.html"
-IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
-THUMB_TEMPLATE="$ROOT/web/thumb_template.html"
-HIST_TEMPLATE="$ROOT/web/histogram_template.html"
+export FOLDER_TEMPLATE="$ROOT/web/folder_template.html"
+export IMAGE_TEMPLATE="$ROOT/web/image_template.html"
+export IMAGELINK_TEMPLATE="$ROOT/web/imagelink_template.html"
+export THUMB_TEMPLATE="$ROOT/web/thumb_template.html"
+export HIST_TEMPLATE="$ROOT/web/histogram_template.html"
 DRAGON="openseadragon.min.js"
 
 export IMAGE_COUNTER="$ROOT/quack.imagecounter.temp.$$"
@@ -301,30 +304,6 @@ function ctemplate() {
     echo 'END_OF_TEXT'       >> $TMP
     . $TMP
     rm $TMP
-}
-
-# template pattern replacement
-# Deprecated in favor of ctemplate due to better speed in ctemplate
-function template () {
-    local TEMPLATE="$1"
-    local PATTERN="$2"
-    local REPLACEMENT="$3"
-    
-    # T="foo\\/:bar\\&amp;"$'\n'"Nextline" ; T=`echo "$T" | sed ':a;N;$!ba;s/\\n/\\\\\&br;/g'` ; echo "zoom" | sed "s/o/$T/g" | sed 's/\&br;/\n/g'
-
-    # We need to escape \, &, / and newline in replacement to avoid sed problems
-    # http://stackoverflow.com/questions/407523/escape-a-string-for-sed-search-pattern
-    # http://stackoverflow.com/questions/1251999/sed-how-can-i-replace-a-newline-n
-
-    if [ "$REPLACEMENT" == "`echo -n \"$REPLACEMENT\" | tr '\\n' '*'`" ]; then
-        # No newlines, especially no trailing ones!
-        ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | sed ':a;N;$!ba;s/\n/\\\&bt;/g' ; echo "/g" ) | sed -f - -i $TEMPLATE
-    else
-        # The awk-version always adds a trailing newline, even when the input has none
-        ( echo -n "s/\${$PATTERN}/" ; echo -n "$REPLACEMENT" | sed -e 's/[\\/&]/\\&/g' | awk 1 ORS="\\\\&br;" ; echo "/g" ) | sed -f - -i $TEMPLATE
-    fi
-    # Insert into template, then unescape newlines
-    sed 's/\&br;/\n/g' -i $TEMPLATE
 }
 
 # Creates the bash environment variables corresponding to those used by makeImages
@@ -616,129 +595,6 @@ function processElements() {
     IFS=$SAVEIFS
 }
 
-# Generates JavaScript snippet for black and white overlays
-# Input: src
-# Output: OVERLAYS (not terminated with ']')
-function blackWhite() {
-    local SRC="$1"
-    local IMAGE_WIDTH=$2
-    local IMAGE_HEIGHT=$3
-    local REL_HEIGHT=`echo "scale=2;$IMAGE_HEIGHT/$IMAGE_WIDTH" | bc`
-
-    # Special overlays to show absolute black and absolute white pixels
-    # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
-    OVERLAYS="overlays: ["$'\n'
-    OVERLAYS="${OVERLAYS}{id: 'white',"$'\n'
-    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
-    OVERLAYS="${OVERLAYS}  className: 'whiteoverlay'"$'\n'
-    OVERLAYS="${OVERLAYS}},"$'\n'
-    OVERLAYS="${OVERLAYS}{id: 'black',"$'\n'
-    OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
-    OVERLAYS="${OVERLAYS}  className: 'blackoverlay'"$'\n'
-    OVERLAYS="${OVERLAYS}},"$'\n'
-}
-
-# Generates overlayscase 
-# src dest altofile width height
-# Output: ELEMENTS_HTML OVERLAYS OCR_CONTENT IDNEXT_CONTENT FULL_RELATIVE_HEIGHT ACCURACY
-function processALTO() {
-    local SRC="$1"
-    local DEST="$2"
-    local ALTO_FILE="$3"
-    local IMAGE_WIDTH=$4
-    local IMAGE_HEIGHT=$5
-#    local WIDTH=$4
-#    local HEIGHT=$5
-
-    # Used by caller
-    OVERLAYS=""
-    ELEMENTS_HTML=""
-    OCR_CONTENT=""
-    IDNEXT_CONTENT=""
-    FULL_RELATIVE_HEIGHT="1"
-    ACCURACY="N/A"
-
-    local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
-    blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
-    # TODO: Extract relevant elements from the Alto for display
-    if [ ! -f "$ALTO" ]; then
-        # TODO: Better handling of non-existence
-            ELEMENTS_HTML="<p class=\"warning\">No ALTO file at $ALTO</p>"$'\n'
-            # Terminate the black/white overlay and return
-            OVERLAYS="${OVERLAYS}]"
-        return
-    fi
-
-    cp "$ALTO" "$ALTO_DEST"
-    # Extract key elements from the ALTO
-    local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
-#    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
-    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
-    local PHEIGHT=`echo $PTAG | sed 's/.*HEIGHT=\"\([^"]\+\)".*/\\1/g'`
-    local PWIDTH=`echo $PTAG | sed 's/.*WIDTH=\"\([^"]\+\)".*/\\1/g'`
-    ACCURACY=`echo $PTAG | sed 's/.*PC=\"\([^"]\+\)".*/\\1/g'`
-    ACCURACY=`echo "scale=2;x=$ACCURACY*100/1; if(x<1) print 0; x" | bc`
-
-    FULL_RELATIVE_HEIGHT=`echo "scale=6;$PHEIGHT/$PWIDTH" | bc | sed 's/^\./0./'`
-    # TODO: Ponder how relative positioning works and why this hack is necessary
-    # Theory #1: OpenSeadragon messes up the vertical relative positioning
-    PHEIGHT=$PWIDTH
-
-    ELEMENTS_HTML="<table class=\"altoelements\"><tr><th>Key</th> <th>Value</th></tr>"$'\n'
-    for E in $ALTO_ELEMENTS; do
-        SAVEIFS=$IFS
-        IFS=$(echo -en "\n\b")
-        for V in `echo "$ALTO_COMPACT" | grep -o "<${E}>[^<]\\+</${E}>"`; do
-            TV=`echo "$V" | sed 's/.*>\(.*\)<.*/\\1/g'`
-            ELEMENTS_HTML="${ELEMENTS_HTML}<tr><td>$E</td> <td>$TV</td></tr>"$'\n'
-        done
-        IFS=$SAVEIFS
-    done
-    ELEMENTS_HTML="${ELEMENTS_HTML}</table>"$'\n'
-
-    OCR_CONTENT=""
-    IDNEXTS=""
-    IDPREVS=""
-
-    # Remove newlines from the ALTO
-    SANS=`cat "$ALTO" | sed ':a;N;$!ba;s/\\n/ /g'`
-
-    processElements "$SANS" "ComposedBlock" "composed"
-    processElements "$SANS" "Illustration" "illustration"
-    processElements "$SANS" "TextBlock" "highlight"
-
-    OVERLAYS="${OVERLAYS}   ]"$'\n'
-}
-
-# Searches from the root for alternative versions of the given image
-# Very specific to Statsbiblioteket
-# src_folder image
-# Output: ALTERNATIVES_HTML
-function resolveAlternatives() {
-    local SRC_FOLDER="$1"
-    local IMAGE="$2"
-    local FULL="${SRC_FOLDER}/${IMAGE}"
-#    local ID=`echo "$IMAGE" | grep -o "[0-9][0-9][0-9][0-9]-.*"`
-    local ID="${IMAGE%.*}"
-
-    if [ "." == ".$ID" ]; then
-        echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
-        return
-    fi
-
-    pushd "$SOURCE_FULL" > /dev/null
-    ALTERNATIVES_HTML="<ul class=\"alternatives\">"$'\n'
-    for A in `find . -name "*${ID}" | sort`; do
-        # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
-       local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
-       local D="${A%.*}"
-       ALTERNATIVES_HTML="${ALTERNATIVES_HTML}<li><a href=\"${UP}${D}.html\">${LINK}</a></li>"$'\n'
-    done
-    ALTERNATIVES_HTML="${ALTERNATIVES_HTML}</ul>"$'\n'
-    popd > /dev/null
-}
-
-
 # Input: up parent srcFolder dstFolder
 #
 function makeIndex() {
@@ -784,14 +640,14 @@ function makeIndex() {
     echo "$IMAGES" | xargs -n 1 -I'{}' -P $HISTOGRAM_THREADS bash -c 'makeHistograms "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
-#    local PREV_IMAGE=""
-    if [ ! "." == ".$IMAGES" ]; then
-        for I in $IMAGES; do
-            local PREV_IMAGE=`echo "$IMAGES" | grep -B 1 "$I" | head -n 1 | grep -v "$I"`
-            local NEXT_IMAGE=`echo "$IMAGES" | grep -A 1 "$I" | tail -n 1 | grep -v "$I"`
-            makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$PREV_IMAGE" "$NEXT_IMAGE"
-        done
-    fi
+    echo "$IMAGES" | xargs -n 1 -I'{}' -P $PAGE_THREADS bash -c '$PAGE_SCRIPT "$@"' _ "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$IMAGES" \;
+
+#    if [ ! "." == ".$IMAGES" ]; then
+#        for I in $IMAGES; do
+#            makePreviewPage "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "$I" "$IMAGES"
+            #"$PREV_IMAGE" "$NEXT_IMAGE"
+#        done
+#    fi
 
     # Generate links, thumbs and histograms from the pages for the folder view
     local THUMBS_HTML=""
