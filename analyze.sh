@@ -13,6 +13,8 @@ if [ "." == ".$ASSUME_GREY" ]; then
 fi
 
 # TODO: Accept destination for identify-file as input
+# TODO: If FORCE_HISTOGRAM is true, cached identify-files should be deleted
+#       to ensure CROP_PERCENT is used
 
 # Input: image
 # Sample: foo.png
@@ -27,13 +29,24 @@ function im_identify() {
         return
     fi
     if [ "false" == "$ASSUME_GREY" ]; then
-    # We do the TIFF-conversion to force greyscale
+        # We do the TIFF-conversion to force greyscale
         local TMP=`mktemp`.tif
-        convert "$SRC" -colorspace gray "$TMP"
+        if [ "." == ".$CROP_PERCENT" ]; then
+            gm convert "$SRC" -colorspace gray "$TMP"
+        else
+            gm convert "$SRC" -gravity Center -crop $CROP_PERCENT%x+0+0 -colorspace gray "$TMP"
+        fi
         identify -verbose "$TMP" > "$IDENTIFY"
         rm "$TMP"
     else
-        identify -verbose "$SRC" > "$IDENTIFY"
+        if [ "." == ".$CROP_PERCENT" ]; then
+            identify -verbose "$SRC" > "$IDENTIFY"
+        else
+            local TMP=`mktemp`.tif
+            gm convert "$SRC" -gravity Center -crop $CROP_PERCENT%x+0+0 "$TMP"
+            identify -verbose "$TMP" > "$IDENTIFY"
+            #rm "$TMP"
+        fi
     fi
     echo "$IDENTIFY"
 }
