@@ -279,11 +279,12 @@ function makePreviewPage() {
         PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
     fi
    
+    local CREATED_PAGES=`addGetCounter $PAGE_COUNTER`
+
     if [ "true" != "$FORCE_PAGES" -a -e "$P" ]; then
         return
     fi
 
-    local CREATED_PAGES=`addGetCounter $PAGE_COUNTER`
     echo " - ${P##*/} (${CREATED_PAGES}/${TOTAL_IMAGES})"
 
     local ALTO_FILE="${BASE}${ALTO_EXT}"
