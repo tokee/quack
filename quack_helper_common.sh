@@ -66,3 +66,21 @@ export -f deleteCount
 #L=`createCount foo 0`
 #addGetCounter $L
 #addGetCounter $L
+
+# Skips the given number of lines and returns the rest
+# Input: string lines
+function skipLines() {
+    local TEXT="$1"
+    local SKIP="$2"
+ 
+    local LENGTH=`echo "$TEXT" | wc -l`
+    if [ $LENGTH -le $SKIP ]; then
+        echo ""
+        return
+    fi
+    echo "$TEXT" | tail -n $((LENGTH-SKIP))
+
+}
+export -f skipLines
+
+#skipLines "$1" "$2"
