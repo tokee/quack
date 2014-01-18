@@ -256,8 +256,9 @@ if [ ! -f "$ROOT/web/$DRAGON" ]; then
             echo "$OSD_DIRECT"
             wget "$OSD_DIRECT" -O "$ROOT/web/$OSD_ZIP"
             pushd "$ROOT/web" > /dev/null
-            unzip "$ROOT/web/$OSD_ZIP" "openseadragon-bin-1.0.0/openseadragon.min.js"
+            unzip "$ROOT/web/$OSD_ZIP"
             mv "openseadragon-bin-1.0.0/openseadragon.min.js" "$DRAGON"
+            mv "openseadragon-bin-1.0.0/images" "$ROOT/web"
             rm -r "openseadragon-bin-1.0.0"
             popd > /dev/null
             rm "$ROOT/web/$OSD_ZIP"
@@ -279,8 +280,7 @@ function copyFiles () {
         echo "Creating folder $DEST"
         mkdir -p "$DEST"
     fi
-    cp ${ROOT}/web/*.js "$DEST"
-    cp ${ROOT}/web/*.css "$DEST"
+    cp -r ${ROOT}/web/*.js ${ROOT}/web/*.css ${ROOT}/web/images "$DEST"
 }
 
 # http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
