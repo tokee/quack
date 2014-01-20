@@ -55,6 +55,25 @@ function blackWhite() {
     local IMAGE_HEIGHT=$3
     local REL_HEIGHT=`echo "scale=2;$IMAGE_HEIGHT/$IMAGE_WIDTH" | bc`
 
+    if [ "." == ".$CROP_PERCENT" ]; then
+        local CROP_X_FRACTION="0.0"
+        local CROP_Y_FRACTION="0.0"
+        local CROP_WIDTH_FRACTION="1.0"
+        local CROP_HEIGHT_FRACTION="$REL_HEIGHT"
+    else
+        local PERCENT=`echo "$CROP_PERCENT" | grep -o "[0-9]\+"`
+        # TODO: Rounding is quite rough. Consider keeping fractions and skipping intermediates
+        local PERCENT=$(((100-$PERCENT)/2))
+        local CROP_X=$((PERCENT*IMAGE_WIDTH/100))
+        local CROP_Y=$((PERCENT*IMAGE_HEIGHT/100))
+        local CROP_WIDTH=$((IMAGE_WIDTH-(2*CROP_X)))
+        local CROP_HEIGHT=$((IMAGE_HEIGHT-(2*CROP_Y)))
+        local CROP_X_FRACTION=`echo "scale=2;x=$CROP_X/$IMAGE_WIDTH; if(x<1) print 0; x" | bc`
+        local CROP_Y_FRACTION=`echo "scale=2;x=$CROP_Y/$IMAGE_WIDTH; if(x<1) print 0; x" | bc`
+        local CROP_WIDTH_FRACTION=`echo "scale=2;x=$CROP_WIDTH/$IMAGE_WIDTH; if(x<1) print 0; x" | bc`
+        local CROP_HEIGHT_FRACTION=`echo "scale=2;x=$CROP_HEIGHT/$IMAGE_WIDTH; if(x<1) print 0; x" | bc`
+    fi
+
     # Special overlays to show absolute black and absolute white pixels
     # The FULL_REL is a hack as OpenSeaDragon scales with respect to width
     OVERLAYS="overlays: ["$'\n'
@@ -65,6 +84,10 @@ function blackWhite() {
     OVERLAYS="${OVERLAYS}{id: 'black',"$'\n'
     OVERLAYS="${OVERLAYS}  x: 0.0, y: 0.0, width: 1.0, height: $REL_HEIGHT,"$'\n'
     OVERLAYS="${OVERLAYS}  className: 'blackoverlay'"$'\n'
+    OVERLAYS="${OVERLAYS}},"$'\n'
+    OVERLAYS="${OVERLAYS}{id: 'cropbox',"$'\n'
+    OVERLAYS="${OVERLAYS}  x: $CROP_X_FRACTION, y: $CROP_Y_FRACTION, width: $CROP_WIDTH_FRACTION, height: $CROP_HEIGHT_FRACTION,"$'\n'
+    OVERLAYS="${OVERLAYS}  className: 'cropoverlay'"$'\n'
     OVERLAYS="${OVERLAYS}},"$'\n'
 }
 

@@ -220,6 +220,11 @@ ul.alternatives li + li:before {
     pointer-events: none;
 }
 
+/* TODO: Make a mouse-over on histogram-trigger */
+.cropoverlay  {
+    border: 1px solid yellow;
+}
+
 #presentation-display {
     position: relative;
     margin-right: 340px;
