@@ -176,7 +176,7 @@ function histogramScript() {
     local DEST="$4"
 
     local IDENTIFY=`im_identify "$SRC"`
-    if [ -n "$DEST" ]; then
+    if [ ! -n "$DEST" ]; then
         local DEST=${SRC%%.*}.histogram.png
     fi
     # Convert      
