@@ -197,12 +197,16 @@ function histogramScript() {
     local MAX_COUNT=0
     local TOTAL_COUNT=0
 
-    local SAVEIFS=$IFS
-    IFS=$(echo -en "\n\b")
+#    local SAVEIFS=$IFS
+#    IFS=$(echo -en "\n\b")
     while IFS= read -r L
     do
-        local GREY=`echo "$L" | cut -d\  -f1`
-        local COUNT=`echo "$L" | cut -d\  -f2`
+        set -- junk $L
+        shift
+#        local GREY=`echo "$L" | cut -d\  -f1`
+#        local COUNT=`echo "$L" | cut -d\  -f2`
+        local GREY=$1
+        local COUNT=$2
         local TOTAL_COUNT=$((TOTAL_COUNT+COUNT))
         if [ $MIN_GREY -gt $GREY ]; then
             local MIN_GREY=$GREY
@@ -218,7 +222,7 @@ function histogramScript() {
         fi
     done <<< "$GREYS"
 
-    IFS=$SAVEIFS
+#    IFS=$SAVEIFS
 #    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
 
     if [ -n "$HISTOGRAM_PHEIGHT" ]; then
@@ -292,6 +296,8 @@ function histogramScript() {
 }
 export -f histogramScript
 
-#export HISTOGRAM_PHEIGHT="10%"
-#histogramScript $1 200 false
+export HISTOGRAM_PHEIGHT="10%"
+time histogramScript $1 200 false
+time histogramScript $1 200 false
+time histogramScript $1 200 false
 # grey_stats $1
