@@ -57,6 +57,7 @@ function im_identify() {
     fi
     echo "$IDENTIFY"
 }
+export -f im_identify
 
 # TODO: Accept destination for grey-stats-file as input
 
@@ -73,7 +74,7 @@ function grey_stats() {
     fi
 
     if [ ! -f "$SRC" ]; then
-        echo "grey_stats: The file $SRC does not exist in `pwd`"
+        echo "grey_stats: The file $SRC does not exist in `pwd`" 1>&2
         return
     fi
 
@@ -165,16 +166,19 @@ function grey_stats() {
 }
 
 # Produces a histogram over greyscale intensities in the given image
-# Input: image height log
-# Sample: foo.jpg 200 true
+# Input: image height log [destination]
+# Sample: foo.jpg 200 true foo.hist.png
 # Output: foo.png (256 x height pixels) with the histogram
-function histogram_script() {
+function histogramScript() {
     local SRC="$1"
     local HEIGHT=$2
     local LOG=$3
+    local DEST="$4"
 
     local IDENTIFY=`im_identify "$SRC"`
-    local DEST=${SRC%%.*}.histogram.png
+    if [ -n "$DEST" ]; then
+        local DEST=${SRC%%.*}.histogram.png
+    fi
     # Convert      
     #   78085: (  0,  0,  0) #000000 black
     #    3410: (  1,  1,  1) #010101 rgb(1,1,1)
@@ -215,12 +219,15 @@ function histogram_script() {
     done <<< "$GREYS"
 
     IFS=$SAVEIFS
-    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
+#    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
 
-    if [ ! "." == ".$HISTOGRAM_HEIGHT" ]; then
-        local HH=`echo "$HISTOGRAM_HEIGHT" | grep -o "[0-9]\+"`
-        local MAX_COUNT=$((HH*TOTAL_COUNT/100))
-        echo "Max: $MAX_COUNT / $TOTAL_COUNT" 1>&2
+    if [ -n "$HISTOGRAM_PHEIGHT" ]; then
+        if [ ! "auto" == "$HISTOGRAM_PHEIGHT" ]; then
+            if [ ! "script_auto" == "$HISTOGRAM_PHEIGHT" ]; then
+                local HH=`echo "$HISTOGRAM_PHEIGHT" | grep -o "[0-9]\+"`
+                local MAX_COUNT=$((HH*TOTAL_COUNT/100))
+            fi
+        fi
    fi
 
     # Let SCALE map all counts from 0 to 1
@@ -257,7 +264,7 @@ function histogram_script() {
         fi
         # /1 due to funky bc scale not being applied if nothing is done
         local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
-        echo " - $PIXELS" 1>&2
+
         if [ 0 -lt $PIXELS ]; then
             for P in `seq 0 $((PIXELS-1))`; do
                 echo -n -e \\x0 >> $HTMP
@@ -283,7 +290,8 @@ function histogram_script() {
 #    ls -l $HTMP
 #    rm $HTMP
 }
+export -f histogramScript
 
-#export HISTOGRAM_HEIGHT="10%"
-#histogram_script $1 200 false
+#export HISTOGRAM_PHEIGHT="10%"
+#histogramScript $1 200 false
 # grey_stats $1
