@@ -168,7 +168,7 @@ function grey_stats() {
 # Input: image height log
 # Sample: foo.jpg 200 true
 # Output: foo.png (256 x height pixels) with the histogram
-function histogram() {
+function histogram_script() {
     local SRC="$1"
     local HEIGHT=$2
     local LOG=$3
@@ -217,6 +217,12 @@ function histogram() {
     IFS=$SAVEIFS
     echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
 
+    if [ ! "." == ".$HISTOGRAM_HEIGHT" ]; then
+        local HH=`echo "$HISTOGRAM_HEIGHT" | grep -o "[0-9]\+"`
+        local MAX_COUNT=$((HH*TOTAL_COUNT/100))
+        echo "Max: $MAX_COUNT / $TOTAL_COUNT" 1>&2
+   fi
+
     # Let SCALE map all counts from 0 to 1
     if [ ".true" == ".$LOG" ]; then
         local SCALE=`echo "scale=10;1/l($MAX_COUNT)" | bc -l`
@@ -235,10 +241,14 @@ function histogram() {
     fi
 
     echo "P5 $HEIGHT 256 255" > $HTMP
-    for G in `seq 0 255`; do
+    # TODO: Examine why we need the extra line (0 256) below
+    for G in `seq 0 256`; do
         local COUNT=`echo "$GREYS" | grep "^$G " | sed 's/[0-9]\\+ \\([0-9]\\+\\)/\\1/g'`
         if [ "." == ".$COUNT" ]; then
             local COUNT=$NONE
+        fi
+        if [ $COUNT -gt $MAX_COUNT ]; then
+            local COUNT=$MAX_COUNT
         fi
         if [ "true" == "$LOG" ]; then
             local PIXELS=`echo "scale=10;l($COUNT)/l(10)*$SCALE*$HEIGHT" | bc -l`
@@ -247,14 +257,14 @@ function histogram() {
         fi
         # /1 due to funky bc scale not being applied if nothing is done
         local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
-
+        echo " - $PIXELS" 1>&2
         if [ 0 -lt $PIXELS ]; then
-            for P in `seq 0 $PIXELS`; do
+            for P in `seq 0 $((PIXELS-1))`; do
                 echo -n -e \\x0 >> $HTMP
             done
         fi
-        if [ $((HEIGHT-1)) -gt $PIXELS ]; then
-            for P in `seq $((PIXELS+1)) $((HEIGHT-1)) `; do
+        if [ $PIXELS -lt $((HEIGHT-1)) ]; then
+            for P in `seq $((PIXELS+1)) $((HEIGHT)) `; do
                 echo -n -e \\xff >> $HTMP
             done
         fi
@@ -268,11 +278,12 @@ function histogram() {
 #        done
 #        echo "$G $COUNT $PIXELS"
     done
-    echo "convert -rotate 270 $HTMP $DEST"
-    convert -rotate 270 $HTMP "$DEST"
-    ls -l $HTMP
-    rm $HTMP
+#    echo "convert $HTMP -rotate 270 $DEST"
+    convert $HTMP -rotate 270 "$DEST"
+#    ls -l $HTMP
+#    rm $HTMP
 }
 
-# histogram $1 200 false
+#export HISTOGRAM_HEIGHT="10%"
+#histogram_script $1 200 false
 # grey_stats $1
