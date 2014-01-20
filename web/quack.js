@@ -219,6 +219,13 @@ function colorGroups() {
     }
     console.log('Coloring groups finished');
 }
+
+function histogramIn() {
+    addForward('cropbox', 'cropoverlayShow');
+}
+function histogramOut() {
+    removeForward('cropbox', 'cropoverlayShow');
+}
  
 function setupJS() {
     // TODO: Check if this is an image page and if not, exit immediately
@@ -253,6 +260,13 @@ function setupJS() {
     for (var i = 0 ; i < content.length ; i++) {
         content[i].className = content[i].className.replace(' passive', '');
     }    
+
+    // Mouseover on histogram should display crop area
+    var content = document.getElementsByClassName('histogram');
+    for (var i = 0 ; i < content.length ; i++) {
+        content[i].onmouseover = histogramIn;
+        content[i].onmouseout = histogramOut;
+    }
 }
 function setupJSDelay() {
     // We need to have the OpenSeadragon overlays in place

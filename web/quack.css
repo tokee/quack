@@ -220,9 +220,13 @@ ul.alternatives li + li:before {
     pointer-events: none;
 }
 
-/* TODO: Make a mouse-over on histogram-trigger */
+/* Always shown om image */
 .cropoverlay  {
-    border: 1px solid yellow;
+    /*border: 1px solid yellow;*/
+}
+/* Shown on mouse over on histogram */
+.cropoverlayShow  {
+    border: 10px solid red;
 }
 
 #presentation-display {
