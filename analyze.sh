@@ -96,7 +96,7 @@ function grey_stats() {
     
     local UNIQUE=`echo "$RAW_VALUES" | wc -l`
 
-    local FIRST_REAL_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o ": \\+([^0-9]*[0-9]\\+," | grep -o "[0-9]\\+"`
+    local FIRST_REAL_GREY=`echo "$RAW_VALUES" | head -n 1 | sed 's/.* ( *\([0-9]\+\),.*/\1/'`
 
     local UNIQUE_DARKS=0
     if [ ! "1,1,1" == ".$BLOWN_BLACK_BT" ]; then
@@ -121,19 +121,19 @@ function grey_stats() {
         #local FIRST_GREY=`echo "$E" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
     else
         local UNIQUE_DARKS=1
-        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | sed 's/.* ( *\([0-9]\+\),.*/\1/'`
         local FIRST_COUNT=`echo "$RAW_VALUES" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
     fi
     if [ 0 -eq "$FIRST_COUNT" ]; then
         # No pixels from 0-fuzzy_factor
         local UNIQUE_DARKS=1
-        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+        local FIRST_GREY=`echo "$RAW_VALUES" | head -n 1 | sed 's/.* ( *\([0-9]\+\),.*/\1/'`
         local FIRST_COUNT=`echo "$RAW_VALUES" | head -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
     fi
     IFS=$(echo -en $"\n")
 
     local LAST_COUNT=`echo "$RAW_VALUES" | tail -n 1 | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local LAST_GREY=`echo "$RAW_VALUES" | tail -n 1 | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    local LAST_GREY=`echo "$RAW_VALUES" | tail -n 1 | sed 's/.* ( *\([0-9]\+\),.*/\1/'`
 
     local ZEROES=$((256-UNIQUE))
     local SPAN=$((LAST_GREY-FIRST_REAL_GREY+1))
@@ -145,7 +145,7 @@ function grey_stats() {
     local REDUCED=`skipLines "$REDUCED" -1`
     local SPIKE_LINE=`echo "$REDUCED" | sort -n | tail -n 1`
     local SPIKE_COUNT=`echo "$SPIKE_LINE" | grep -o " [0-9]\\+:" | grep -o "[0-9]\\+"`
-    local SPIKE_GREY=`echo "$SPIKE_LINE" | grep -o " ([0-9 ,]*)" | sed 's/ //g'`
+    local SPIKE_GREY=`echo "$SPIKE_LINE" | sed 's/.* ( *\([0-9]\+\),.*/\1/'`
 
     local GEOMETRY=`echo $INFO | grep "Geometry: [0-9]\\+x[0-9]\\+" | grep -o "[0-9]\\+x[0-9]\\+"`
     local X=`echo $GEOMETRY | grep -o "[0-9]\\+x" | grep -o "[0-9]\\+"`
