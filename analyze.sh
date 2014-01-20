@@ -165,6 +165,16 @@ function grey_stats() {
     echo "$PIXELS $UNIQUE $FIRST_COUNT $PERCENT_FIRST $FIRST_GREY $LAST_COUNT $PERCENT_LAST $LAST_GREY $SPIKE_COUNT $SPIKE_PERCENT $SPIKE_GREY $ZEROES $HOLES"
 }
 
+#http://stackoverflow.com/questions/5799303/print-a-character-repeatedly-in-bash
+# Input: char num
+printChar() {
+    str=$1
+    num=$2
+    v=$(printf "%-${num}s" "$str")
+    echo "${v// /*}"
+}
+export -f printChar
+
 # Produces a histogram over greyscale intensities in the given image
 # Input: image height log [destination]
 # Sample: foo.jpg 200 true foo.hist.png
@@ -197,8 +207,7 @@ function histogramScript() {
     local MAX_COUNT=0
     local TOTAL_COUNT=0
 
-#    local SAVEIFS=$IFS
-#    IFS=$(echo -en "\n\b")
+    # Speedup-trick: Read one line of a time instead of splitting up front with for-loop
     while IFS= read -r L
     do
         set -- junk $L
@@ -222,7 +231,6 @@ function histogramScript() {
         fi
     done <<< "$GREYS"
 
-#    IFS=$SAVEIFS
 #    echo "Grey: $MIN_GREY $MAX_GREY  count: $MIN_COUNT $MAX_COUNT $TOTAL_COUNT"
 
     if [ -n "$HISTOGRAM_PHEIGHT" ]; then
@@ -234,11 +242,13 @@ function histogramScript() {
         fi
    fi
 
-    # Let SCALE map all counts from 0 to 1
+    # Let SCALE map all counts from 0 to 100000000 (giga)
     if [ ".true" == ".$LOG" ]; then
-        local SCALE=`echo "scale=10;1/l($MAX_COUNT)" | bc -l`
+        local SCALE=`echo "1000000000/l($MAX_COUNT)" | bc -l`
+#        local SCALE=`echo "scale=10;1/l($MAX_COUNT)" | bc -l`
     else
-        local SCALE=`echo "scale=10;1/$MAX_COUNT" | bc -l`
+        local SCALE=$((1000000000/MAX_COUNT))
+#        local SCALE=`echo "scale=10;1/$MAX_COUNT" | bc -l`
     fi
 
     # We create a PGM-file with the extracted greyscale statistics
@@ -252,41 +262,37 @@ function histogramScript() {
     fi
 
     echo "P5 $HEIGHT 256 255" > $HTMP
-    # TODO: Examine why we need the extra line (0 256) below
-    for G in `seq 0 256`; do
-        local COUNT=`echo "$GREYS" | grep "^$G " | sed 's/[0-9]\\+ \\([0-9]\\+\\)/\\1/g'`
+
+    # Speedup-tricks: Avoid forking as much as possible by doing arithmetic
+    # with the built-in $(()). Avoid floating point by scaling up.
+    # Output 0 and ff with printf instead of loop.
+    for G in `seq 0 255`; do
+        local LINE=`echo "$GREYS" | grep "^$G "`
+        # http://stackoverflow.com/questions/1469849/how-to-split-one-string-into-multiple-strings-in-bash-shell   
+        set -- junk $LINE
+        shift
+        COUNT=$2
+#        local COUNT=`echo "$GREYS" | grep "^$G " | sed 's/[0-9]\\+ \\([0-9]\\+\\)/\\1/g'`
         if [ "." == ".$COUNT" ]; then
             local COUNT=$NONE
         fi
         if [ $COUNT -gt $MAX_COUNT ]; then
             local COUNT=$MAX_COUNT
         fi
-        if [ "true" == "$LOG" ]; then
+        if [ ".true" == ".$LOG" ]; then
             local PIXELS=`echo "scale=10;l($COUNT)/l(10)*$SCALE*$HEIGHT" | bc -l`
+            local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
+#            local PIXELS=`echo "scale=10;l($COUNT)/l(10)*$SCALE*$HEIGHT/1000000000" | bc -l`
         else 
-            local PIXELS=`echo "scale=10;$COUNT*$SCALE*$HEIGHT" | bc -l`
+             local PIXELS=$(($COUNT*$SCALE*$HEIGHT/1000000000))
+#            local PIXELS=`echo "scale=10;$COUNT*$SCALE*$HEIGHT" | bc -l`
         fi
         # /1 due to funky bc scale not being applied if nothing is done
-        local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
+ #       local PIXELS=`echo "scale=0;$PIXELS/1" | bc -l`
 
-        if [ 0 -lt $PIXELS ]; then
-            for P in `seq 0 $((PIXELS-1))`; do
-                echo -n -e \\x0 >> $HTMP
-            done
-        fi
-        if [ $PIXELS -lt $((HEIGHT-1)) ]; then
-            for P in `seq $((PIXELS+1)) $((HEIGHT)) `; do
-                echo -n -e \\xff >> $HTMP
-            done
-        fi
-
-#        for P in `seq 0 $((HEIGHT-1))`; do
-#            if [ $P -le $PIXELS ]; then
-#                echo -n -e \\x0 >> $HTMP
-#            else 
-#                echo -n -e \\xff >> $HTMP
-#            fi
-#        done
+        printf %$((PIXELS))s |tr " " '\0' >> $HTMP
+        # 377 octal = ff hex
+        printf %$((HEIGHT-PIXELS))s |tr " " '\377' >> $HTMP
 #        echo "$G $COUNT $PIXELS"
     done
 #    echo "convert $HTMP -rotate 270 $DEST"
@@ -296,8 +302,8 @@ function histogramScript() {
 }
 export -f histogramScript
 
-export HISTOGRAM_PHEIGHT="10%"
-time histogramScript $1 200 false
-time histogramScript $1 200 false
-time histogramScript $1 200 false
+#export HISTOGRAM_PHEIGHT="10%"
+#time histogramScript $1 200 false
+#time histogramScript $1 200 false
+#time histogramScript $1 200 false
 # grey_stats $1
