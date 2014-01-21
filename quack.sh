@@ -179,6 +179,11 @@ export SPECIFIC_IMAGE_SNIPPET_EXTENSION=".snippet"
 OSD_ZIP="openseadragon-bin-1.0.0.zip"
 OSD_DIRECT="http://github.com/openseadragon/openseadragon/releases/download/v1.0.0/$OSD_ZIP"
 
+# The blacklist and whitelist are files with regular expressions, used when traversing the 
+# source folder. One expression/line.
+export BLACKLIST="quack.blacklist"
+export WHITELIST="quack.whitelist"
+
 START_PATH=`pwd`
 pushd `dirname $0` > /dev/null
 export ROOT=`pwd`
@@ -186,6 +191,14 @@ export ROOT=`pwd`
 if [ -e "quack.settings" ]; then
     echo "Sourcing user settings from quack.settings in `pwd`"
     source "quack.settings"
+fi
+if [ -e "$BLACKLIST" ]; then
+    echo "Using $BLACKLIST in `pwd`"
+    export BLACKLIST_FILE="`pwd`/$BLACKLIST"
+fi
+if [ -e "$WHITELIST" ]; then
+    echo "Using $WHITELIST in `pwd`"
+    export WHITELIST_FILE="`pwd`/$WHITELIST"
 fi
 # functions for generating identify-files and extract greyscale statistics
 source "analyze.sh"
@@ -199,10 +212,18 @@ if [ ! "$START_PATH" == "$ROOT" ]; then
         echo "Sourcing user settings from quack.settings in `pwd`"
         source "quack.settings"
     fi
+    if [ -e "$BLACKLIST" ]; then
+        echo "Using $BLACKLIST in `pwd`"
+        export BLACKLIST_FILE="`pwd`/$BLACKLIST"
+    fi
+    if [ -e "$WHITELIST" ]; then
+        echo "Using $WHITELIST in `pwd`"
+        export WHITELIST_FILE="`pwd`/$WHITELIST"
+    fi
 fi
 
 if [ ".true" == ".$FORCE_BLOWN" ]; then
-    # When we force regeneration of blown, we myst also regenerate the blown thumbs.
+    # When we force regeneration of blown, we must also regenerate the blown thumbs.
     export FORCE_BLOWN_THUMBS=true
 fi
 
@@ -511,6 +532,35 @@ function makeHistograms() {
 }
 export -f makeHistograms
 
+# Input: [recursive]
+# Output: Images in the current folder, matching $IMAGE_GLOB and
+# obeying white- and black-list.
+function listImages() {
+    local RECURSIVE="$1"
+
+    if [ -n "$BLACKLIST_FILE" ]; then
+        if [ -n "$WHITELIST_FILE" ]; then
+            ls $IMAGE_GLOB 2> /dev/null | grep -f "$WHITELIST_FILE" | grep -v -f "$BLACKLIST_FILE"
+        else
+            ls $IMAGE_GLOB 2> /dev/null | grep -v -f "$BLACKLIST_FILE"
+        fi
+    else
+        if [ -n "$WHITELIST_FILE" ]; then
+            ls $IMAGE_GLOB 2> /dev/null | grep -f "$WHITELIST_FILE"
+        else
+            ls $IMAGE_GLOB 2> /dev/null
+        fi
+    fi
+
+    if [ ".true" == ".$RECURSIVE" ]; then
+        for SUB in `ls -d */ 2> /dev/null`; do
+            pushd $SUB > /dev/null
+            listImages $RECURSIVE
+            popd > /dev/null
+        done
+    fi
+}
+
 # Input: up parent srcFolder dstFolder
 #
 function makeIndex() {
@@ -546,7 +596,7 @@ function makeIndex() {
     fi
 
     # Images
-    local IMAGES=`ls $IMAGE_GLOB 2> /dev/null`
+    local IMAGES=`listImages`
 
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
@@ -643,7 +693,7 @@ function makeIndex() {
 echo "Quack starting at `date`"
 copyFiles
 pushd "$SOURCE" > /dev/null
-export TOTAL_IMAGES=`ls -R $IMAGE_GLOB 2> /dev/null | wc -l`
+export TOTAL_IMAGES=`listImages true | wc -l`
 popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
 deleteCount $PAGE_COUNTER
