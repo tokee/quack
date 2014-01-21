@@ -268,11 +268,10 @@ function setupJS() {
         content[i].onmouseout = histogramOut;
     }
 }
-function setupJSDelay() {
-    // We need to have the OpenSeadragon overlays in place
-    // TODO: Make this a callback from OpenSeadragon instead
-    window.setTimeout(setupJS, 500);
+var readyCount = 0;
+function dragonReady() {
+    if (++readyCount == 2) {
+        console.log('dragonReady called 2 times. OpenSeadragon should have updated the DOM by now');
+        setupJS();
+    }
 }
-//window.onload=setupJS;
-window.onload=setupJSDelay;
-
