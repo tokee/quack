@@ -248,6 +248,9 @@ div.thumbs a, div.histograms a {
     position: relative;
     display: block;
 }
+.thumb {
+    min-width: 256px;
+}
 .thumboverlay {
     /* Hidden by default, enable with JavaScript */
     display: none;
