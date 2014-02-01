@@ -12,6 +12,13 @@ if [ "." == ".$ASSUME_GREY" ]; then
     ASSUME_GREY=true
 fi
 
+# Prints width and height of the given image, separated by space
+# Input: Image
+function isize() {
+    identify -format "%w %h" "$1"
+}
+export -f isize
+
 # TODO: Accept destination for identify-file as input
 # TODO: If FORCE_HISTOGRAM is true, cached identify-files should be deleted
 #       to ensure CROP_PERCENT is used
@@ -58,6 +65,7 @@ function im_identify() {
     echo "$IDENTIFY"
 }
 export -f im_identify
+
 
 # TODO: Accept destination for grey-stats-file as input
 

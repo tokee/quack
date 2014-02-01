@@ -288,21 +288,27 @@ function makePreviewPage() {
         exit
     fi
 
-    local IDENTIFY=`identify "$DEST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
-    IMAGE_WIDTH=`echo $IDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
-    IMAGE_HEIGHT=`echo $IDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+    set -- junk `isize "$DEST_IMAGE"`
+    shift
+    IMAGE_WIDTH=$1
+    IMAGE_HEIGHT=$2
     IMAGE_MP=`echo "scale=1;x=$IMAGE_WIDTH*$IMAGE_HEIGHT/1000000; if(x<1) print 0; x" | bc`
-    local TIDENTIFY=`identify "$THUMB_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
-    THUMB_WIDTH=`echo $TIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
-    THUMB_HEIGHT=`echo $TIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
-    local HIDENTIFY=`identify "$HIST_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
-    HISTOGRAM_WIDTH=`echo $HIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
-    HISTOGRAM_HEIGHT=`echo $HIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+
+    set -- junk `isize "$THUMB_IMAGE"`
+    shift
+    THUMB_WIDTH=$1
+    THUMB_HEIGHT=$2
+
+    set -- junk `isize "$HIST_IMAGE"`
+    shift
+    HISTOGRAM_WIDTH=$1
+    HISTOGRAM_HEIGHT=$2
 
     if [ ".true" == ".$PRESENTATION" ]; then
-        local PIDENTIFY=`identify "$PRESENTATION_IMAGE" | grep -o " [0-9]\+x[0-9]\\+ "`
-        PRESENTATION_WIDTH=`echo $PIDENTIFY | grep -o "[0-9]\+x" | grep -o "[0-9]\+"`
-        PRESENTATION_HEIGHT=`echo $PIDENTIFY | grep -o "x[0-9]\+" | grep -o "[0-9]\+"`
+        set -- junk `isize "$PRESENTATION_IMAGE"`
+        shift
+        PRESENTATION_WIDTH=$1
+        PRESENTATION_HEIGHT=$2
     fi
    
     local CREATED_PAGES=`addGetCounter $PAGE_COUNTER`
