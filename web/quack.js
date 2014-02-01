@@ -59,7 +59,7 @@ function toggleTextBlock() {
     
     for (var i = 0; i < myDragon.overlays.length; i++) {
         var id = myDragon.overlays[i].id;
-        if ( id == 'black' || id == 'white' ) {
+        if ( id == 'black' || id == 'white' || id == 'cropbox') {
             continue;
         }
         OpenSeadragon.setElementOpacity(id, opacity, false);
