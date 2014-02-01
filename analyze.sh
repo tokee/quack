@@ -66,6 +66,19 @@ function im_identify() {
 }
 export -f im_identify
 
+# Outputs all the greyscale values and their counts
+# Input: Image [destination]
+function greys() {
+    local IFILE=`im_identify "$1" "$2"`
+
+    local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
+    if [ ! "." == ".`grep Colormap "$IFILE"`" ]; then
+        cat "$IFILE" | grep -A 257 Histogram | grep -B 256 Colormap | grep "[0-9]\\+: ("
+    else 
+        cat "$IFILE" | grep -A 256 Histogram | grep "[0-9]\\+: ("
+    fi        
+}
+export -f greys
 
 # TODO: Accept destination for grey-stats-file as input
 
@@ -92,15 +105,16 @@ function grey_stats() {
     local GREY=${DEST_FOLDER}/${BASE%%.*}.grey
 
     local INFO=`cat "$IDENTIFY"`
+    local RAW_VALUES=`greys "$SRC" "$DEST_FOLDER"`
     # TODO: No good as the histogram data might be much less than 256
-    local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
-    if [ ! "." == ".`echo "$VALUES" | grep Colormap`" ]; then
-        local VALUES=`echo "$VALUES" | grep -B 256 Colormap`
-    fi        
-    local RAW_VALUES=`echo "$VALUES" | grep "[0-9]\\+: ("`
+#    local VALUES=`cat "$IDENTIFY" | grep -A 256 Histogram`
+#    if [ ! "." == ".`echo "$VALUES" | grep Colormap`" ]; then
+#        local VALUES=`echo "$VALUES" | grep -B 256 Colormap`
+#    fi        
+#    local RAW_VALUES=`echo "$VALUES" | grep "[0-9]\\+: ("`
 #    local VALUES="$INFO"
-
-    local SAVEIFS=$IFS
+# ***
+#    local SAVEIFS=$IFS
     IFS=$(echo -en $"\n")
     
     local UNIQUE=`echo "$RAW_VALUES" | wc -l`
@@ -203,11 +217,7 @@ function histogramScript() {
     # into
     # 0 78085
     # 1 3410
-    if [ "." == ".`grep \"Colormap:\" \"$IDENTIFY\"`" ]; then
-        GREYS=`cat "$IDENTIFY" | grep -A 256 "  Histogram:" | grep -o " \\+[0-9]\\+: ( *[0-9]\\+, *[0-9]\\+, *[0-9]\\+)" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
-     else
-       GREYS=`cat "$IDENTIFY" | grep -A 9999 "  Histogram:" | grep -B 256 "Colormap:" | grep -o " \\+[0-9]\\+: ( *[0-9]\\+, *[0-9]\\+, *[0-9]\\+)" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
-    fi
+    GREYS=`greys "$SRC" | sed 's/ \\+\\([0-9]\\+\\): ( *\\([0-9]\\+\\).\\+/\\2 \\1/g'`
     # Find lowest and highest for both intensity and count
     local MIN_GREY=255
     local MAX_GREY=0
