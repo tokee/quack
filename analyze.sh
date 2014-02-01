@@ -206,8 +206,9 @@ function histogramScript() {
     local HEIGHT=$2
     local LOG=$3
     local DEST="$4"
+    local IDENTIFY_DEST=$(dirname ${DEST})
 
-    local IDENTIFY=`im_identify "$SRC"`
+    local IDENTIFY=`im_identify "$SRC" "$IDENTIFY_DEST"`
     if [ ! -n "$DEST" ]; then
         local DEST=${SRC%%.*}.histogram.png
     fi
