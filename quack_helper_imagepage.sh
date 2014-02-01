@@ -187,6 +187,9 @@ function processALTO() {
     
     cp "$ALTO" "$ALTO_DEST"
     # Extract key elements from the ALTO
+    BLOCK_COUNT=`grep -c "<TextBlock " "$ALTO"`
+    LINE_COUNT=`grep -c "<TextLine " "$ALTO"`
+    STRING_COUNT=`grep -c "<String " "$ALTO"`
     local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
 #    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
     local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
