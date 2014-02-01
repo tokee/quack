@@ -140,7 +140,7 @@ function processElements() {
 
         # Special handling of TextBlock
         if [ "TextBlock" == "$TAG" ]; then
-            BCONTENT=`echo "$B" | grep -o 'CONTENT="[^"]\+"' | sed 's/CONTENT="\\([^"]\\+\\)"/\\1/g' | sed ':a;N;$!ba;s/\\n/ /g' | sed 's/\\\\/\\\\\\\\/g'`
+            BCONTENT=`echo "$B" | grep -o ' CONTENT="[^"]\+"' | sed 's/ CONTENT="\\([^"]\\+\\)"/\\1/g' | sed ':a;N;$!ba;s/\\n/ /g' | sed 's/\\\\/\\\\\\\\/g'`
             # TODO: Handle entity-escaped content as well as quotes and backslash
             OCR_CONTENT="${OCR_CONTENT}ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
 #            echo "ocrs[\"${BID}\"] = \"$BCONTENT\";"$'\n'
