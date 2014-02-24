@@ -26,17 +26,21 @@ function resolveAlternatives() {
     local SRC_FOLDER="$1"
     local IMAGE="$2"
     local FULL="${SRC_FOLDER}/${IMAGE}"
-#    local ID=`echo "$IMAGE" | grep -o "[0-9][0-9][0-9][0-9]-.*"`
-    local ID="${IMAGE%.*}"
 
-    if [ "." == ".$ID" ]; then
-        echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
-        return
-    fi
+#    local ID=`echo "$IMAGE" | grep -o "[0-9][0-9][0-9][0-9]-.*"`
+#    local ID="${IMAGE%.*}"
+#    if [ "." == ".$ID" ]; then
+#        echo "   Unable to extract ID for \"$IMAGE\". No alternatives lookup"
+#        return
+#    fi
 
     pushd "$SOURCE_FULL" > /dev/null
     ALTERNATIVES_HTML="<ul class=\"alternatives\">"$'\n'
-    for A in `find . -name "*${ID}" | sort`; do
+    echo "Location `pwd` looking for $IMAGE"
+#    for A in `find "$SOURCE_FULL" -name "${ID}*" | sort`; do
+    # dot to get relative path
+    for A in `find . -name "${IMAGE}" | sort`; do
+        echo "*** found $A"
         # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
        local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
        local D="${A%.*}"
@@ -342,9 +346,9 @@ function makePreviewPage() {
     fi
 
     # PARENT, DATE, UP, NAVIGATION, BASE, SOURCE, FULL_RELATIVE_HEIGHT, EDEST, IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_MP, TILE_SOURCES, THUMB, THUMB_WIDTH, THUMB_HEIGHT, PRESENTATION, PRESENTATION_WIDTH, PRESENTATION_HEIGHT, WHITE, BLACK, OVERLAYS, OCR_CONTENT, IDNEXTS, IDPREVS, ALTO_ELEMENTS_HTML, HISTOGRAM, ALTO, ALTERNATIVES
-    SOURCE="$SOURCE_IMAGE"
+#    SOURCE="$SOURCE_IMAGE"
     SOURCE_SHORT=${SOURCE##*/}
-    SOURCE_SIZE=`du -k "$SOURCE" | grep -o "^[0-9]\+"`
+    SOURCE_SIZE=`du -k "$SOURCE_IMAGE" | grep -o "^[0-9]\+"`
     EDEST=${DEST_IMAGE##*/}
     IMAGE="$EDEST"
 
@@ -408,7 +412,7 @@ function makePreviewPage() {
     HISTOGRAM="$EHIST"
     ALTO="$ALTO_FILE"
     if [ "true" == "$RESOLVE_ALTERNATIVES" ]; then
-        resolveAlternatives "$SRC_FOLDER" "$IMAGE"
+        resolveAlternatives "$SRC_FOLDER" $(basename $SOURCE_IMAGE)
     else
         local ALTERNATIVES_HTML=""
     fi

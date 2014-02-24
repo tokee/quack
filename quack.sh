@@ -263,7 +263,7 @@ if [ "." == ".$SOURCE" ]; then
     exit 2
 fi
 pushd "$SOURCE" > /dev/null
-SOURCE_FULL=`pwd`
+export SOURCE_FULL=`pwd`
 popd > /dev/null
 
 DEST=$2
