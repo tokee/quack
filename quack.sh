@@ -245,7 +245,7 @@ export IMAGE_COUNTER=`createCounter image 0`
 export HIST_COUNTER=`createCounter histogram 0`
 
 function usage() {
-    echo "quack 1.2 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.3 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
