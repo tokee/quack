@@ -36,7 +36,6 @@ function resolveAlternatives() {
 
     pushd "$SOURCE_FULL" > /dev/null
     ALTERNATIVES_HTML="<ul class=\"alternatives\">"$'\n'
-    echo "Location `pwd` looking for $IMAGE"
 #    for A in `find "$SOURCE_FULL" -name "${ID}*" | sort`; do
     # dot to get relative path
     for A in `find . -name "${IMAGE}" | sort`; do
