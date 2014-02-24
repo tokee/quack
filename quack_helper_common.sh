@@ -54,6 +54,13 @@ function addGetCounter() {
 }
 export -f addGetCounter
 
+# Input: lockname
+# Output: Old counter from lock file
+function getCounter() {
+    addDeltaGetCounter "$1" 0
+}
+export -f getCounter
+
 # Removed old count files
 function deleteCount() {
     local LOCKNAME="$1"
