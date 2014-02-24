@@ -26,7 +26,6 @@ export -f createCounter
 function addDeltaGetCounter() {
     local LOCKNAME="$1"
     local DELTA="$2"
-
     if [ "." == ".$LOCKNAME" ]; then
         echo "threadedCounter: The lockname must be specified" 1>&2
         exit
@@ -53,6 +52,20 @@ function addGetCounter() {
     addDeltaGetCounter "$1" 1
 }
 export -f addGetCounter
+
+# TODO: Implement this. The problem is that bash does not support adding fractions
+#       and that a call to bc is costly. Maybe we can move the decimal point to
+#       millisecond precision and use integers instead?
+# Input: lockname starttime (in nanoseconds)
+# Increments the counter with milliseconds from currenttime-starttime
+function updateTiming() {
+    local START=$2
+    local START=${START:0:-6}
+    local END=`date +%s%N`
+    local END=${END:0:-6}
+    addDeltaGetCounter $1 $((END-START))
+}
+export -f updateTiming
 
 # Input: lockname
 # Output: Old counter from lock file

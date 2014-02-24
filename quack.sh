@@ -244,6 +244,17 @@ export PAGE_COUNTER=`createCounter page 0`
 export IMAGE_COUNTER=`createCounter image 0`
 export HIST_COUNTER=`createCounter histogram 0`
 
+export TILE_TIMING=`createCounter tile_timing 0`
+export QA_TIMING=`createCounter qa_timing 0`
+export PRESENTATION_TIMING=`createCounter presentation_timing 0`
+export OVERLAY_TIMING=`createCounter overlay_timing 0`
+export THUMB_TIMING=`createCounter thumb_timing 0`
+export HIST_TIMING=`createCounter hist_timing 0`
+export TOTAL_TIMING=`createCounter total_timing 0`
+
+ALL_COUNTERS="$PAGE_COUNTER $PMAGE_COUNTER $HIST_COUNTER $TILE_TIMING $QA_TIMING $PRESENTATION_TIMING $THUMB_TIMING $HIST_TIMING OVERLAY_TIMING $TOTAL_TIMING"
+TOTAL_START_TIME=`date +%s%N`
+
 function usage() {
     echo "quack 1.3 beta - Quality Assurance oriented ALTO viewer"
     echo ""
@@ -419,7 +430,9 @@ function makeImages() {
     # Even if TILE="true", we create the full main presentational image as it
     # might be requested for download
     if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES})"; then
+        local START=`date +%s%N`
         gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
+        updateTiming $QA_TIMING $START > /dev/null
     fi
 
     if [ "png" == ${IMAGE_DISP_EXT} ]; then
@@ -430,12 +443,15 @@ function makeImages() {
     fi
 
     if [ ".true" == ".$PRESENTATION" ]; then
+        local START=`date +%s%N`
         if shouldGenerate "$FORCE_PRESENTATION" "$PRESENTATION_IMAGE" "presentation"; then
             $PRESENTATION_SCRIPT "$CONV" "$PRESENTATION_IMAGE"
         fi
+        updateTiming $PRESENTATION_TIMING $START > /dev/null
     fi
 
     if [ ".true" == ".$TILE" ]; then
+        local START=`date +%s%N`
         if shouldGenerate "$FORCE_TILES" "$TILE_FOLDER" "tiles"; then
        # TODO: Specify JPEG quality
             deepzoom "$CONV" -format $IMAGE_DISP_EXT -path "${DEST_FOLDER}/"
@@ -451,8 +467,10 @@ function makeImages() {
                 fi
             fi
         fi
+        updateTiming $TILE_TIMING $START > /dev/null
     fi
 
+    local START_OVERLAY=`date +%s%N`
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
     fi
@@ -460,7 +478,9 @@ function makeImages() {
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
         gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
     fi
+    updateTiming $OVERLAY_TIMING $START_OVERLAY > /dev/null
 
+    local START_THUMB=`date +%s%N`
     if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
         gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
     fi
@@ -469,14 +489,15 @@ function makeImages() {
         echo " - ${THUMB_OVERLAY_WHITE##*/}"
         # Note: We use ImageMagick here as older versions of GraphicsMagic does not
         # handle resizing of alpha-channel PNGs followed by color reduction
-        convert "$WHITE_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_WHITE"
+        gm convert "$WHITE_IMAGE" -resize $THUMB_IMAGE_SIZE "$THUMB_OVERLAY_WHITE"
     fi
     if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_BLACK" "thumb overlay"; then
         echo " - ${THUMB_OVERLAY_BLACK##*/}"
         # Note: We use ImageMagick here as older versions of GraphicsMagic does not
         # handle resizing of alpha-channel PNGs followed by color reduction
-        convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE -colors 2 "$THUMB_OVERLAY_BLACK"
+        gm convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE "$THUMB_OVERLAY_BLACK"
     fi
+    updateTiming $THUMB_TIMING $START_THUMB > /dev/null
 }
 export -f makeImages
 
@@ -490,6 +511,7 @@ function makeHistograms() {
     local PRESENTATION_SCRIPT="$6"
     local TILE="$7"
 
+    local START=`date +%s%N`
 #    echo "makeImages $SRC_FOLDER $DEST_FOLDER"
 
     local SANS_PATH=${IMAGE##*/}
@@ -530,6 +552,7 @@ function makeHistograms() {
             histogramScript "$CONV" 200 false "$HIST_IMAGE"
         fi
     fi
+    updateTiming $HIST_TIMING $START > /dev/null
 }
 export -f makeHistograms
 
@@ -689,7 +712,28 @@ function makeIndex() {
     done
 
     popd > /dev/null
- }
+}
+
+function pAverage() {
+    if [ ! -n "$TOTAL_IMAGES" -o "0" -eq "$TOTAL_IMAGES" ]; then
+        echo "`getCounter "$1"` ms"
+        return
+    fi
+    local COUNTER=`getCounter "$1"`
+    local AVG=$(($COUNTER / $TOTAL_IMAGES))
+    echo "$COUNTER ms ($AVG ms/image)"
+}
+
+function performanceStats() {
+    echo "Performance measurements"
+    echo " - total time (clock): `pAverage $TOTAL_TIMING`"
+    echo " - tiles (cpu): `pAverage "$TILE_TIMING"`"
+    echo " - qa images (cpu): `pAverage "$QA_TIMING"`"
+    echo " - presentation images (cpu): `pAverage "$PRESENTATION_TIMING"`"
+    echo " - thumbs (cpu): `pAverage "$THUMB_TIMING"`"
+    echo " - histograms (cpu): `pAverage "$HIST_TIMING"`"
+    echo " - overlays (cpu): `pAverage "$OVERLAY_TIMING"`"
+}
 
 echo "Quack starting at `date`"
 copyFiles
@@ -697,8 +741,10 @@ pushd "$SOURCE" > /dev/null
 export TOTAL_IMAGES=`listImages true | wc -l`
 popd > /dev/null
 makeIndex "" "" "$SOURCE" "$DEST"
-deleteCount $PAGE_COUNTER
-deleteCount $IMAGE_COUNTER
-deleteCount $HIST_COUNTER
+updateTiming $TOTAL_TIMING $TOTAL_START_TIME > /dev/null
+performanceStats
+for COUNTER in $ALL_COUNTERS; do
+    deleteCount $COUNTER
+done
 echo "All done at `date`"
 echo "Please open ${DEST}/index.html in a browser"
