@@ -21,10 +21,12 @@ function createCounter() {
 }
 export -f createCounter
 
-# Input: lockname
+# Input: lockname delta
 # Output: Old counter from lock file + 1
-function addGetCounter() {
+function addDeltaGetCounter() {
     local LOCKNAME="$1"
+    local DELTA="$2"
+
     if [ "." == ".$LOCKNAME" ]; then
         echo "threadedCounter: The lockname must be specified" 1>&2
         exit
@@ -38,10 +40,17 @@ function addGetCounter() {
         mkdir $LOCKNAME 2> /dev/null
     done
     local COUNTER=`cat "$COUNTFILE"`
-    local COUNTER=$((COUNTER+1))
+    local COUNTER=$((COUNTER+DELTA))
     echo $COUNTER > "$COUNTFILE"
     rm -rf $LOCKNAME
     echo $COUNTER
+}
+export -f addDeltaGetCounter
+
+# Input: lockname
+# Output: Old counter from lock file + 1
+function addGetCounter() {
+    addDeltaGetCounter "$1" 1
 }
 export -f addGetCounter
 
