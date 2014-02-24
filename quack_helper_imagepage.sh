@@ -40,7 +40,6 @@ function resolveAlternatives() {
 #    for A in `find "$SOURCE_FULL" -name "${ID}*" | sort`; do
     # dot to get relative path
     for A in `find . -name "${IMAGE}" | sort`; do
-        echo "*** found $A"
         # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
        local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
        local D="${A%.*}"
