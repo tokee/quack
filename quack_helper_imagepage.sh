@@ -41,6 +41,7 @@ function resolveAlternatives() {
     for A in `find . -name "${IMAGE}" | sort`; do
         # "../../.././Apex/B3/2012-01-05-01/Dagbladet-2012-01-05-01-0130B.jp2 -> Apex/B3
        local LINK=`echo "$A" | sed 's/[./]\\+\\([^\\/]\\+\\/[^\\/]\\+\\).*/\\1/g'`
+       local LINK=$(dirname "$LINK")/
        local D="${A%.*}"
        ALTERNATIVES_HTML="${ALTERNATIVES_HTML}<li><a href=\"${UP}${D}.html\">${LINK}</a></li>"$'\n'
     done
