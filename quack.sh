@@ -265,7 +265,7 @@ function check_dependencies() {
         echo "Error: convert missing: Please install Image Magick" >&2
         exit 2
     fi
-    if [ "." == ".`which deepzoon`" -a "true" == $TILE ]; then
+    if [ "." == ".`which deepzoom`" -a "true" == $TILE ]; then
         echo "Error: deepzoom missing and TILE=true: Please install deepzoom" >&2
         exit 2
     fi
