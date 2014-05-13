@@ -255,6 +255,22 @@ export TOTAL_TIMING=`createCounter total_timing 0`
 ALL_COUNTERS="$PAGE_COUNTER $PMAGE_COUNTER $HIST_COUNTER $TILE_TIMING $QA_TIMING $PRESENTATION_TIMING $THUMB_TIMING $HIST_TIMING OVERLAY_TIMING $TOTAL_TIMING"
 TOTAL_START_TIME=`date +%s%N`
 
+
+function check_dependencies() {
+    if [ "." == ".`which gm`" ]; then
+        echo "Error: gm missing: Please install Graphics Magick" >&2
+        exit 2
+    fi
+    if [ "." == ".`which convert`" ]; then
+        echo "Error: convert missing: Please install Image Magick" >&2
+        exit 2
+    fi
+    if [ "." == ".`which deepzoon`" -a "true" == $TILE ]; then
+        echo "Error: deepzoom missing and TILE=true: Please install deepzoom" >&2
+        exit 2
+    fi
+}
+
 function usage() {
     echo "quack 1.3 beta - Quality Assurance oriented ALTO viewer"
     echo ""
@@ -736,6 +752,7 @@ function performanceStats() {
 }
 
 echo "Quack starting at `date`"
+check_dependencies
 copyFiles
 pushd "$SOURCE" > /dev/null
 export TOTAL_IMAGES=`listImages true | wc -l`
