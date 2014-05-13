@@ -1,0 +1,15 @@
+There seems to be a problem with Perl 5.18+ and deepzoom 0.05.
+http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom
+
+It complains about an enum being wrongly initialized. 
+https://metacpan.org/pod/release/ETHER/Moose-2.1106-TRIAL/lib/Moose/Manual/Delta.pod#pod2.1200
+
+The problem can be solved by replacing
+  enum 'packing' => qw( exponential linear );
+with 
+  enum 'packing' => [qw( exponential linear )];
+in the file 
+  /usr/local/share/perl/5.18.2/Graphics/DZI/A4.pm
+(or similar folder).
+
+
