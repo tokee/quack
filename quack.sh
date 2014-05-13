@@ -17,7 +17,7 @@
 #
 
 #
-# Quack 1.3 beta - Quality assurance tool for text scanning projects.
+# Quack 1.4 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -252,7 +252,7 @@ export THUMB_TIMING=`createCounter thumb_timing 0`
 export HIST_TIMING=`createCounter hist_timing 0`
 export TOTAL_TIMING=`createCounter total_timing 0`
 
-ALL_COUNTERS="$PAGE_COUNTER $PMAGE_COUNTER $HIST_COUNTER $TILE_TIMING $QA_TIMING $PRESENTATION_TIMING $THUMB_TIMING $HIST_TIMING OVERLAY_TIMING $TOTAL_TIMING"
+ALL_COUNTERS="$PAGE_COUNTER $MAGE_COUNTER $HIST_COUNTER $TILE_TIMING $QA_TIMING $PRESENTATION_TIMING $THUMB_TIMING $HIST_TIMING $OVERLAY_TIMING $TOTAL_TIMING"
 TOTAL_START_TIME=`date +%s%N`
 
 
@@ -272,7 +272,7 @@ function check_dependencies() {
 }
 
 function usage() {
-    echo "quack 1.3 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.4 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
@@ -488,11 +488,11 @@ function makeImages() {
 
     local START_OVERLAY=`date +%s%N`
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -transparent white -colors 2 "$WHITE_IMAGE"
+        gm convert "$CONV" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -colors 2 -matte -transparent white  "$WHITE_IMAGE"
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -transparent white -colors 2 "$BLACK_IMAGE"
+        gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -colors 2 -matte -transparent white "$BLACK_IMAGE"
     fi
     updateTiming $OVERLAY_TIMING $START_OVERLAY > /dev/null
 
