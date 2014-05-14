@@ -229,6 +229,10 @@ if [ ".true" == ".$FORCE_BLOWN" ]; then
 fi
 
 PRESENTATION_SCRIPT="$ROOT/presentation.sh"
+if [ -f "$START_PATH/presentation_custom.sh" ]; then
+    echo "Using presentation_custom.sh located in $START_PATH"
+    PRESENTATION_SCRIPT="$START_PATH/presentation_custom.sh"
+fi
 if [ -f "$START_PATH/presentation.sh" ]; then
     echo "Using presentation.sh located in $START_PATH"
     PRESENTATION_SCRIPT="$START_PATH/presentation.sh"
