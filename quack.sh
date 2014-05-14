@@ -64,6 +64,9 @@ export IMAGE_DISP_EXT="png"
 # Note: This does (unfortunately) not set the quality when tiles and
 # jpg has been chosen.
 export IMAGE_DISP_QUALITY="95"
+# When generating the QA image, these arguments will be added to the
+# gm convert command
+export QA_EXTRA=""
 
 # The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
@@ -451,7 +454,7 @@ function makeImages() {
     # might be requested for download
     if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES})"; then
         local START=`date +%s%N`
-        gm convert "$SOURCE_IMAGE" -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
+        gm convert "$SOURCE_IMAGE" $QA_EXTRA -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
         updateTiming $QA_TIMING $START > /dev/null
     fi
 
