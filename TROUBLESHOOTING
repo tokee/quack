@@ -1,3 +1,7 @@
+Some issues encountered with Quack and how to solve them.
+
+*** deepzoom does not work ***
+
 There seems to be a problem with Perl 5.18+ and deepzoom 0.05.
 http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom
 
@@ -10,6 +14,28 @@ with
   enum 'packing' => [qw( exponential linear )];
 in the file 
   /usr/local/share/perl/5.18.2/Graphics/DZI/A4.pm
-(or similar folder).
+(or similar folder). There will still be warnings with "given is 
+experimental" and "when is experimental", but they are not critical
+in Perl 5.18 (although this probably means that Graphics::DZI will
+need further tweaks to work with later Perl versions).
 
 
+*** The zoomable images are too bright ***
+
+This issue has not been investigated fully. The text below is based on
+speculation, but seems to produce the expected result.
+
+It seems that conversion to PNG with newer versions of Graphics Magick
+produces an image with Gamma (gAMA chunk) set to 1.0 if no gamma is
+specified in the source image.
+
+The common implicit assumption with no Gamma specified is Gamma 2.2
+so the displayed tiles will appear very bright (1.0 -> 2.2).
+
+To counter this effect, set Gamma explicitely to 0.4 (1.0 / 2.2) in the
+QA image generation by adding the line
+
+  export QA_EXTRA="+gamma 0.4"
+
+to quack.settings. This specified the Gamma chunk without altering the
+pixel values.
