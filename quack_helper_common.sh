@@ -60,9 +60,9 @@ export -f addGetCounter
 # Increments the counter with milliseconds from currenttime-starttime
 function updateTiming() {
     local START=$2
-    local START=${START:0:-6}
+    local START=${START:0:${#START}-6}
     local END=`date +%s%N`
-    local END=${END:0:-6}
+    local END=${END:0:${#END}-6}
     addDeltaGetCounter $1 $((END-START))
 }
 export -f updateTiming
