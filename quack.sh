@@ -72,7 +72,7 @@ export QA_EXTRA=""
 export THUMB_IMAGE_SIZE="300x200"
 
 # These elements will be grepped from the ALTO-files and shown on the image pages
-ALTO_ELEMENTS="processingDateTime softwareName"
+export ALTO_ELEMENTS="processingDateTime softwareName softwareVersion"
 
 # Number of threads used for image processing. CPU and memory bound.
 export THREADS=4
