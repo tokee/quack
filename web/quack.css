@@ -265,31 +265,31 @@ div.thumbs a, div.histograms a {
 .histograms {
     display: none;
 }
-table.imagelinks {
+table.qtable {
     border: 1px solid black;
 }
-table.imagelinks, table.imagelinks tr td, table.imagelinks tr th {
+table.qtable, table.qtable tr td, table.qtable tr th {
     border-collapse: collapse;
 }
-table.imagelinks tr td, table.imagelinks tr th {
+table.qtable tr td, table.qtable tr th {
     padding: 0.2em 0.4em 0.2em 0.4em;
     border: none;
 }
-table.imagelinks tr th {
+table.qtable tr th {
     background: #C5AE93;
 }
-table.imagelinks tbody tr:nth-child(2n+1) td {
+table.qtable tbody tr:nth-child(2n+1) td {
   background: #FFEEC3;
 }
-table.imagelinks th
-{
+table.qtable th {
     text-align:left;
 }
 
-table.imagelinks td + td,
-table.imagelinks th + th
-{
+table.qtable td + td, table.qtable th + th {
     text-align:right
+}
+table.subfolders tr th.date, table.subfolders tr td.date {
+    text-align: left;
 }
 
 

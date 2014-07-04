@@ -174,6 +174,9 @@ export SNIPPET_IMAGE=""
 # If present in a source-folder, the content of the folder will be inserted into
 # the generated folder HTML file.
 export SPECIFIC_FOLDER_SNIPPET="folder.snippet"
+# How to sort the list of sub folders. Possible values are "changed", "changed_rev",
+# "name" and "name_rev".
+export SUB_FOLDER_LIST_SORT="changed"
 
 # If a file with image basename + this extension is encountered, the content will
 # be inserted into the generated image HTML file.
@@ -683,19 +686,28 @@ function makeIndex() {
         done
     fi
 
-    local SUBS=`ls "$SRC_FOLDER"`
-    if [ "." == ".$S
-    UBS" ]; then
+    case ".$SUB_FOLDER_LIST_SORT" in
+        .changed) local SUBS=`ls -rt "$SRC_FOLDER"` ;;
+        .changed_rev) local SUBS=`ls -rt "$SRC_FOLDER" | tac` ;;
+        .name_rev) local SUBS=`ls "$SRC_FOLDER" | tac` ;;
+        *) local SUBS=`ls "$SRC_FOLDER"` ;;
+    esac
+        
+    if [ "." == ".$SUBS" ]; then
         SUBFOLDERS_HTML="<p>No subfolders</p>"$'\n'
     else
-        SUBFOLDERS_HTML="<ul>"$'\n'
+        SUBFOLDERS_HTML="<table class=\"subfolders qtable sortable\">"$'\n'"<tr><th class=\"folder\">Folder</th> <th class=\"date\">Changed</th> <th class=\"count\">Images</th></tr>"$'\n'
         # TODO: Make the iterator handle spaces
         for F in $SUBS; do
             if [ -d $F ]; then
-                SUBFOLDERS_HTML="${SUBFOLDERS_HTML}<li><a href=\"$F/index.html\">$F</a></li>"$'\n'
+                local CHANGED=`date -r "$SRC_FOLDER/$F" +%Y%m%d-%H%M`
+                pushd "$SRC_FOLDER/$F" > /dev/null
+                local SUB_COUNT=`listImages true | wc -l`
+                popd
+                SUBFOLDERS_HTML="${SUBFOLDERS_HTML}<tr><td class=\"folder\"><a href=\"$F/index.html\">$F</a></td> <td class=\"date\">$CHANGED</td> <td class=\"count\">$SUB_COUNT</td></tr>"$'\n'
             fi
         done
-        SUBFOLDERS_HTML="${SUBFOLDERS_HTML}</ul>"$'\n'
+        SUBFOLDERS_HTML="${SUBFOLDERS_HTML}</table>"$'\n'
     fi
 
     if [ ! -f *.Edition.xml ]; then
