@@ -628,7 +628,7 @@ function makeIndex() {
     pushd "$SRC_FOLDER" > /dev/null
     local SRC_FOLDER=`pwd`
     popd > /dev/null
-    echo "Processing $SRC_FOLDER"
+    echo "Processing $SRC_FOLDER `date +%H:%M:%S`"
 
     if [ ! -d "$DEST_FOLDER" ]; then
 #        echo "Creating folder $DEST_FOLDER"

@@ -15,7 +15,7 @@ Please visit  [http://tokee.github.io/quack/](http://tokee.github.io/quack/) for
  * [ImageMagick](http://www.imagemagick.org) (as GraphicsMagic cannot create histograms)
  * [openseadragon.min.js](http://openseadragon.github.io/)
  * A suitable beefy browser equipped machine for display, depending on image sizes and ALTO complexity
- * [deepzoom](http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom) (only if tile based display is enabled)
+ * [deepzoom](http://search.cpan.org/~drrho/Graphics-DZI-0.05/script/deepzoom) (only if tile based display is enabled. Install with 'sudo cpan -f install Graphics::DZI')
   * Perl (required by deepzoom)
 
 ## Usage
