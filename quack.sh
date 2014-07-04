@@ -703,7 +703,7 @@ function makeIndex() {
                 local CHANGED=`date -r "$SRC_FOLDER/$F" +%Y%m%d-%H%M`
                 pushd "$SRC_FOLDER/$F" > /dev/null
                 local SUB_COUNT=`listImages true | wc -l`
-                popd
+                popd > /dev/null
                 SUBFOLDERS_HTML="${SUBFOLDERS_HTML}<tr><td class=\"folder\"><a href=\"$F/index.html\">$F</a></td> <td class=\"date\">$CHANGED</td> <td class=\"count\">$SUB_COUNT</td></tr>"$'\n'
             fi
         done
