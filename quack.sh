@@ -13,11 +13,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Copyright 2013 Toke Eskildsen, State and University Library, Denmark
+# 2013-2014 Toke Eskildsen, State and University Library, Denmark
 #
 
 #
-# Quack 1.4 beta - Quality assurance tool for text scanning projects.
+# Quack 1.5 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -175,7 +175,8 @@ export SNIPPET_IMAGE=""
 # the generated folder HTML file.
 export SPECIFIC_FOLDER_SNIPPET="folder.snippet"
 # How to sort the list of sub folders. Possible values are "changed", "changed_rev",
-# "name" and "name_rev".
+# "name" and "name_rev", where "changed" refers to the "last updated" timestamp for
+# the sub-folder and the "_rev"-suffix triggers reverse sorting.
 export SUB_FOLDER_LIST_SORT="changed"
 
 # If a file with image basename + this extension is encountered, the content will
@@ -282,7 +283,7 @@ function check_dependencies() {
 }
 
 function usage() {
-    echo "quack 1.4 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.5 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
