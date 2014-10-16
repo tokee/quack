@@ -142,6 +142,14 @@ export HISTOGRAM_PHEIGHT="script_auto"
 # on the browser but avoids the size and file-count overhead of the tiles.
 export TILE="false"
 
+# If defined, TILE is ignored and OpenSeadragon is set up to get tiles from
+# the image server.
+# Sample: http://myimserver.example.com/iipsrv/?DeepZoom=/net/zone1.isilon.sblokalnet/ifs/archive/avis-show/
+export IIPSRV=""
+# If IIPSRV is defined, this extension will be used instead of the image extension
+# for resolving the dzi
+export IIPSRV_DZI_EXT=".jp2.dzi"
+
 # If true, a secondary view of the scans will be inserted into the page.
 # The view represents an end-user version of the scan. This will often be 
 # downscaled, levelled, sharpened and JPEG'ed.

@@ -351,8 +351,27 @@ function makePreviewPage() {
     EDEST=${DEST_IMAGE##*/}
     IMAGE="$EDEST"
 
-    if [ "true" == "$TILE" ]; then
-        TILE_SOURCES="      Image: {\
+#    tileSources:  'http://achernar/iipsrv/?DeepZoom=/net/zone1.isilon.sblokalnet/ifs/archive/avis-upload/B400027132055-RT1/400027132055-08/1899-11-25-01/adresseavisen1759-1899-11-25-01-0298.jp2.dzi',
+
+
+
+    if [ "." != "$IIPSRV" ]; then
+        # ***************** Imageserver *******************
+        # We get the relative path by subtracting SOURCE_FULL from SRC_FOLDER
+        # Ensure the SOURCE_FULL ends with a slash:
+        local SRC_FULL=`echo "$SOURCE_FULL" | sed 's&\([^/]\)$&\1/&'`
+        # Remove the source root prefix
+        local SRC_REL=`echo "$SRC_FOLDER" | sed "s&$SRC_FULL&&"`
+        # Add the image
+        local IMG_REL="$SRC_REL/$IMAGE"
+        # Set the DZI-extension
+        local SRC_DZI="${IMG_REL%.*}$IIPSRV_DZI_EXT"
+        TILE_SOURCES="'http://achernar/iipsrv/?DeepZoom=/net/zone1.isilon.sblokalnet/ifs/archive/avis-upload/$SRC_DZI'"
+        # TODO: Consider adding PRESENTATION_TILE_SOURCES here
+    else
+        if [ "true" == "$TILE" ]; then
+            # ***************** Tiles *******************
+            TILE_SOURCES="{      Image: {\
         xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
         Url:      \"${TILE_FOLDER##*/}/\",\
         Format:   \"$IMAGE_DISP_EXT\",\
@@ -362,9 +381,9 @@ function makePreviewPage() {
           Width:  \"$IMAGE_WIDTH\",\
           Height: \"$IMAGE_HEIGHT\"\
         }\
-      }"$'\n'
-        if [ ".true" == ".$PRESENTATION" ]; then
-            PRESENTATION_TILE_SOURCES="      Image: {\
+      }}"$'\n'
+            if [ ".true" == ".$PRESENTATION" ]; then
+                PRESENTATION_TILE_SOURCES="      Image: {\
         xmlns:    \"http://schemas.microsoft.com/deepzoom/2008\",\
         Url:      \"${PRESENTATION_TILE_FOLDER##*/}/\",\
         Format:   \"$PRESENTATION_IMAGE_DISP_EXT\",\
@@ -375,20 +394,22 @@ function makePreviewPage() {
           Height: \"$PRESENTATION_HEIGHT\"\
         }\
       }"$'\n'
+            else
+                PRESENTATION_TILE_SOURCES=""
+            fi
+            
         else
-            PRESENTATION_TILE_SOURCES=""
-        fi
-    else
-        TILE_SOURCES="      type: 'legacy-image-pyramid',\
+            # ***************** No Tiles *******************
+            TILE_SOURCES="{      type: 'legacy-image-pyramid',\
       levels:[\
         {\
           url: '${EDEST}',\
           width:  ${IMAGE_WIDTH},\
           height: ${IMAGE_HEIGHT}\
         }\
-      ]"$'\n'
-        if [ ".true" == ".$PRESENTATION" ]; then
-            PRESENTATION_TILE_SOURCES="      type: 'legacy-image-pyramid',\
+      ]}"$'\n'
+            if [ ".true" == ".$PRESENTATION" ]; then
+                PRESENTATION_TILE_SOURCES="      type: 'legacy-image-pyramid',\
       levels:[\
         {\
           url: '${PRESENTATION_IMAGE##*/}',\
@@ -396,10 +417,12 @@ function makePreviewPage() {
           height: ${PRESENTATION_HEIGHT}\
         }\
       ]"$'\n'
-        else
-            PRESENTATION_TILE_SOURCES=""
+            else
+                PRESENTATION_TILE_SOURCES=""
+            fi
         fi
     fi
+
     THUMB="$THUMB_LINK"
     WHITE_LINK=${WHITE_IMAGE##*/}
     WHITE="$WHITE_LINK"
