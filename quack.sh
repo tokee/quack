@@ -431,6 +431,17 @@ shouldGenerate() {
 }
 export -f shouldGenerate
 
+# Handles creation of the intermediate mpc image for speeding up
+# repeated Graphic Magick calls on the same source image
+# Input: src dest
+function ensureIntermediate() {
+    if [ ! -s "$2" ]; then
+        gm convert "$1" "$2"
+        trap "rm -f \"$2\"" EXIT
+    fi
+}
+export -f ensureIntermediate
+
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
 function makeImages() {
@@ -464,6 +475,10 @@ function makeImages() {
     local PRESENTATION_TILE_FOLDER="${DEST_FOLDER}/${BASE}.presentation_files"
     local ALTO_DEST="${DEST_FOLDER}/${BASE}.alto.xml"
 
+
+    # The intermediate format mpc is memory-mapped and very fast for reuse
+    local GM_INTERMEDIATE="${DEST_FOLDER}/${BASE}.mpc"
+
     if [ ! -f "$SOURCE_IMAGE" ]; then
         echo "The source image $S does not exists" >&2
         exit
@@ -475,7 +490,8 @@ function makeImages() {
     # might be requested for download
     if shouldGenerate "$FORCE_QAIMAGE" "$DEST_IMAGE" "QA (${CREATED_IMAGES}/${TOTAL_IMAGES})"; then
         local START=`date +%s%N`
-        gm convert "$SOURCE_IMAGE" $QA_EXTRA -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
+        ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
+        gm convert "$GM_INTERMEDIATE" $QA_EXTRA -quality $IMAGE_DISP_QUALITY "$DEST_IMAGE"
         updateTiming $QA_TIMING $START > /dev/null
     fi
 
@@ -516,17 +532,20 @@ function makeImages() {
 
     local START_OVERLAY=`date +%s%N`
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -colors 2 -matte -transparent white  "$WHITE_IMAGE"
+        ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
+        gm convert "$GM_INTERMEDIATE" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -colors 2 -matte -transparent white  "$WHITE_IMAGE"
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
-        gm convert "$CONV" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -colors 2 -matte -transparent white "$BLACK_IMAGE"
+        ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
+        gm convert "$GM_INTERMEDIATE" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -colors 2 -matte -transparent white "$BLACK_IMAGE"
     fi
     updateTiming $OVERLAY_TIMING $START_OVERLAY > /dev/null
 
     local START_THUMB=`date +%s%N`
     if shouldGenerate "$FORCE_THUMBNAILS" "$THUMB_IMAGE" "thumbnail"; then
-        gm convert "$CONV" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
+        ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
+        gm convert "$GM_INTERMEDIATE" -sharpen 3 -enhance -resize $THUMB_IMAGE_SIZE "$THUMB_IMAGE"
     fi
 
     if shouldGenerate "$FORCE_BLOWN_THUMBS" "$THUMB_OVERLAY_WHITE" "thumb overlay"; then
