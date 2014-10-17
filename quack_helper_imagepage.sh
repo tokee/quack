@@ -355,17 +355,37 @@ function makePreviewPage() {
 
 
 
-    if [ "." != "$IIPSRV" ]; then
         # ***************** Imageserver *******************
         # We get the relative path by subtracting SOURCE_FULL from SRC_FOLDER
+
+    if [ "." != "$IIPSRV" -a "." ]; then
+
         # Ensure the SOURCE_FULL ends with a slash:
         local SRC_FULL=`echo "$SOURCE_FULL" | sed 's&\([^/]\)$&\1/&'`
-        # Remove the source root prefix
-        local SRC_REL=`echo "$SRC_FOLDER" | sed "s&$SRC_FULL&&"`
-        # Add the image
-        local IMG_REL="$SRC_REL/$IMAGE"
+        if [ -z "$IIPSRV_FOLLOW_SYMLINKS_EXTHACK" ]; then
+            local SRC_IMG="$IMAGE"
+        else 
+            local SRC_IMG="${IMAGE%.*}$IIPSRV_FOLLOW_SYMLINKS_EXTHACK"
+        fi
+
+        if [ ".true" == ".$IIPSRV_FOLLOW_SYMLINKS" -a -n "`readlink $SRC_FOLDER/$SRC_IMG`" ]; then
+            if [ -n "$IIPSRV_FOLLOW_SYMLINKS_ROOT" ]; then
+                local SRC_FULL=`echo "$IIPSRV_FOLLOW_SYMLINKS_ROOT" | sed 's&\([^/]\)$&\1/&'`
+            fi
+            local TRUE_IMAGE=`readlink $SRC_FOLDER/$SRC_IMG`
+            local TRUE_IMAGE=`echo $(cd $(dirname $TRUE_IMAGE); pwd)/$(basename $TRUE_IMAGE)`
+            # Remove the source root prefix
+            local IMG_REL=`echo "$TRUE_IMAGE" | sed "s&$SRC_FULL&&"`
+        else   
+            # Remove the source root prefix
+            local SRC_REL=`echo "$SRC_FOLDER" | sed "s&$SRC_FULL&&"`
+            # Add the image
+            local IMG_REL="$SRC_REL/$SRC_IMG"
+        fi
+
         # Set the DZI-extension
         local SRC_DZI="${IMG_REL%.*}$IIPSRV_DZI_EXT"
+
         TILE_SOURCES="'http://achernar/iipsrv/?DeepZoom=/net/zone1.isilon.sblokalnet/ifs/archive/avis-upload/$SRC_DZI'"
         # TODO: Consider adding PRESENTATION_TILE_SOURCES here
     else

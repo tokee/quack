@@ -149,6 +149,15 @@ export IIPSRV=""
 # If IIPSRV is defined, this extension will be used instead of the image extension
 # for resolving the dzi
 export IIPSRV_DZI_EXT=".jp2.dzi"
+# If IIPSRV is defined, symlinked images will be resolved to their source
+# before being used as paths for the image server
+export IIPSRV_FOLLOW_SYMLINKS="true"
+# Hack for resolving the source image 
+# TODO: Avoid this by passing the real source image
+export IIPSRV_FOLLOW_SYMLINKS_EXTHACK=".jp2"
+# If a symlink is followed and the symlinks root is defined, this is used instead of
+# of SOURCE_FULL for extracting the relative link.
+export IIPSRV_FOLLOW_SYMLINKS_ROOT=""
 
 # If true, a secondary view of the scans will be inserted into the page.
 # The view represents an end-user version of the scan. This will often be 
