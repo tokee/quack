@@ -186,6 +186,9 @@ export BLOWN_BLACK_WT=0,0,0
 export SNIPPET_FOLDER=""
 export SNIPPET_IMAGE=""
 
+# Temporary folder used for .mpc files and similar
+export DEFAULT_QUACK_TMP="/tmp"
+
 # End default settings. User-supplied overrides will be loaded from quack.settings
 
 # If present in a source-folder, the content of the folder will be inserted into
@@ -362,6 +365,10 @@ if [ ! -f "$ROOT/web/$DRAGON" ]; then
     fi
 fi
 
+if [ -z "$QUACK_TMP" ]; then
+    export QUACK_TMP=$DEFAULT_QUACK_TMP
+fi
+
 # Copy OpenSeadragon and all css-files to destination
 function copyFiles () {
     if [ ! -d "$DEST" ]; then
@@ -477,7 +484,8 @@ function makeImages() {
 
 
     # The intermediate format mpc is memory-mapped and very fast for reuse
-    local GM_INTERMEDIATE="${DEST_FOLDER}/${BASE}.mpc"
+    local GM_INTERMEDIATE=`echo "${DEST_FOLDER}/${BASE}.mpc" | sed 's@/@_@g'`
+    local GM_INTERMEDIATE="$QUACK_TMP/$GM_INTERMEDIATE"
 
     if [ ! -f "$SOURCE_IMAGE" ]; then
         echo "The source image $S does not exists" >&2
