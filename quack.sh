@@ -442,9 +442,11 @@ export -f shouldGenerate
 # repeated Graphic Magick calls on the same source image
 # Input: src dest
 function ensureIntermediate() {
-    if [ ! -s "$2" ]; then
-        gm convert "$1" "$2"
-        trap "rm -f \"$2\"" EXIT
+    local D="$2"
+    if [ ! -s "$D" ]; then
+        gm convert "$1" "$D"
+        trap "rm -f \"$D\"" EXIT
+        trap "rm -f \"${D%.*}.cache\"" EXIT
     fi
 }
 export -f ensureIntermediate
