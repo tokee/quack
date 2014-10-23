@@ -381,7 +381,7 @@ function copyFiles () {
 # http://stackoverflow.com/questions/14434549/how-to-expand-shell-variables-in-a-text-file
 # Input: template-file
 function ctemplate() {
-    TMP="`mktemp`.sh"
+    local TMP="`mktemp --suffix .sh`"
     echo 'cat <<END_OF_TEXT' >  $TMP
     cat  "$1"                >> $TMP
     echo 'END_OF_TEXT'       >> $TMP
@@ -772,13 +772,14 @@ function makeIndex() {
     else
         EDITION_HTML=""
         for E in *.Edition.xml; do
+            local EDTMP=`mktemp`
             # echo to get newlines
             EDITION_HTML="${EDITION_HTML}<p>$E</p>"$'\n'
             EDITION_HTML="${EDITION_HTML}<pre>"$'\n'
-            cat $E | sed -e 's/&/&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g'  -e 's/\&gt;\([^\&]\+\)\&lt;/\&gt;<span class="xmlvalue">\1<\/span>\&lt;/g' > /tmp/t_edition
-#            cat $E | sed -e 's/&/&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g'  -e 's/\&lt;([^\&]+)\&gt;/\&lt;<span class="xmlvalue">\1</span>\&gt;/g' > /tmp/t_edition
-            EDITION_HTML="${EDITION_HTML}`cat /tmp/t_edition`"$'\n'
-            rm /tmp/t_edition
+            cat $E | sed -e 's/&/&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g'  -e 's/\&gt;\([^\&]\+\)\&lt;/\&gt;<span class="xmlvalue">\1<\/span>\&lt;/g' > $EDTEMP
+#            cat $E | sed -e 's/&/&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g'  -e 's/\&lt;([^\&]+)\&gt;/\&lt;<span class="xmlvalue">\1</span>\&gt;/g' > $EDTEMP
+            EDITION_HTML="${EDITION_HTML}`cat $EDTEMP`"$'\n'
+            rm $EDTEMP
             EDITION_HTML="${EDITION_HTML}</pre>"$'\n'
         done
     fi

@@ -12,7 +12,7 @@
 # Input: A greyscale image
 # Output: Name pixel_count unique_greyscales #darkest_pixels darkest_pixels_percent darkest_greyscale #brightest_pixels brightest_pixels_percent lightest_greyscale
 
-TMP="/tmp/tmp_crop.bmp"
+TMP="`mktemp --suffix .bmp`"
 
 if [ "." == ".$1" ]; then
     echo "Usage: filename [croppercent]"

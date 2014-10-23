@@ -44,7 +44,7 @@ function im_identify() {
     fi
     if [ "false" == "$ASSUME_GREY" ]; then
         # We do the TIFF-conversion to force greyscale
-        local TMP=`mktemp`.tif
+        local TMP=`mktemp --suffix .tif`
         if [ "." == ".$CROP_PERCENT" ]; then
             gm convert "$SRC" -colorspace gray "$TMP"
         else
@@ -56,10 +56,10 @@ function im_identify() {
         if [ "." == ".$CROP_PERCENT" ]; then
             identify -verbose "$SRC" > "$IDENTIFY"
         else
-            local TMP=`mktemp`.tif
+            local TMP=`mktemp --suffix .tif`
             gm convert "$SRC" -gravity Center -crop $CROP_PERCENT%x+0+0 "$TMP"
             identify -verbose "$TMP" > "$IDENTIFY"
-            #rm "$TMP"
+            rm "$TMP"
         fi
     fi
     echo "$IDENTIFY"
@@ -273,7 +273,7 @@ function histogramScript() {
     # We create a PGM-file with the extracted greyscale statistics
     # as a histogram. The PGM is sideways because it is easier
     # http://netpbm.sourceforge.net/doc/pgm.html
-    local HTMP=`mktemp`.pgm
+    local HTMP=`mktemp --suffix .pgm`
     if [ "true" == "$LOG" ]; then
         local NONE=1
     else
@@ -317,7 +317,7 @@ function histogramScript() {
 #    echo "convert $HTMP -rotate 270 $DEST"
     convert $HTMP -rotate 270 "$DEST"
 #    ls -l $HTMP
-#    rm $HTMP
+    rm $HTMP
 }
 export -f histogramScript
 
