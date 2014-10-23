@@ -445,11 +445,17 @@ function ensureIntermediate() {
     local D="$2"
     if [ ! -s "$D" ]; then
         gm convert "$1" "$D"
-        trap "rm -f \"$D\"" EXIT
-        trap "rm -f \"${D%.*}.cache\"" EXIT
+        # Trap does not work here as new traps for the same signal overrides the old ones
+        trap "rm -f \"${D%.*}.cache\" \"$D\"" EXIT
     fi
 }
 export -f ensureIntermediate
+
+function removeIntermediate() {
+    local D="$1"
+    rm -f "$D" "${D%.*}.cache"
+}
+export -f removeIntermediate
 
 # Creates a presentation image and a histogram for the given image
 # srcFolder dstFolder image crop presentation_script tile
@@ -570,6 +576,9 @@ function makeImages() {
         # handle resizing of alpha-channel PNGs followed by color reduction
         gm convert "$BLACK_IMAGE" -resize $THUMB_IMAGE_SIZE "$THUMB_OVERLAY_BLACK"
     fi
+
+    removeIntermediate "$GM_INTERMEDIATE"
+        
     updateTiming $THUMB_TIMING $START_THUMB > /dev/null
 }
 export -f makeImages
