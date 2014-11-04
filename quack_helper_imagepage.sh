@@ -358,7 +358,7 @@ function makePreviewPage() {
         # ***************** Imageserver *******************
         # We get the relative path by subtracting SOURCE_FULL from SRC_FOLDER
 
-    if [ "." != "$IIPSRV" -a "." ]; then
+    if [ "." != ".$IIPSRV" ]; then
 
         # Ensure the SOURCE_FULL ends with a slash:
         local SRC_FULL=`echo "$SOURCE_FULL" | sed 's&\([^/]\)$&\1/&'`
