@@ -496,7 +496,7 @@ function makeImages() {
     local GM_INTERMEDIATE="$QUACK_TMP/$GM_INTERMEDIATE"
 
     if [ ! -f "$SOURCE_IMAGE" ]; then
-        echo "The source image '$SOURCE_IMAGE' does not exist" >&2
+        echo "Error in makeImages: The source image '$SOURCE_IMAGE' does not exist" >&2
         exit
     fi
 
@@ -608,7 +608,7 @@ function makeHistograms() {
     local HIST_IMAGE="${DEST_FOLDER}/${BASE}.histogram.png"
 
     if [ ! -f "$SOURCE_IMAGE" ]; then
-        echo "The source image $S does not exists" >&2
+        echo "Error in makeHistograms: The source image $SOURCE_IMAGE does not exist" >&2
         exit
     fi
 
@@ -677,7 +677,7 @@ function makeIndex() {
 #    echo "Processing level '$PARENT' from $SRC_FOLDER"
 
     if [ ! -d "$SRC_FOLDER" ]; then
-        echo "Unable to locate folder $SRC_FOLDER from `pwd`" >&2
+        echo "Error in makeIndex: Unable to locate folder $SRC_FOLDER from `pwd`" >&2
         exit
     fi
     pushd "$SRC_FOLDER" > /dev/null
