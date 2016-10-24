@@ -90,22 +90,22 @@ export PAGE_THREADS=8
 # it makes iterative updates fast. If quack settings are tweaked, the relevant
 # FORCE_ options should be temporarily "true" until quack has been run once.
 
-# If true, image-pages will be generated even if they already exists.
+# If true, image-pages will be generated even if they already exist.
 export FORCE_PAGES=false
-# If true, the main QA-images will be generated even if they already exists.
+# If true, the main QA-images will be generated even if they already exist.
 export FORCE_QAIMAGE=false
-# If true, thumbnails will be generated even if they already exists.
+# If true, thumbnails will be generated even if they already exist.
 export FORCE_THUMBNAILS=false
-# If true, blown high- and low-light overlays will be generated even if they already exists.
+# If true, blown high- and low-light overlays will be generated even if they already exist.
 # Setting this to true will also set FORCE_BLOWN_THUMBS to true
 export FORCE_BLOWN=false
-# If true, blown high- and low-light overlays for thumbs will be generated even if they already exists.
+# If true, blown high- and low-light overlays for thumbs will be generated even if they already exist.
 export FORCE_BLOWN_THUMBS=false
-# If true, presentation images will be generated even if they already exists.
+# If true, presentation images will be generated even if they already exist.
 export FORCE_PRESENTATION=false
-# If true, histogram images will be generated even if they already exists.
+# If true, histogram images will be generated even if they already exist.
 export FORCE_HISTOGRAM=false
-# If true, tile images will be generated even if they already exists.
+# If true, tile images will be generated even if they already exist.
 # This is only relevant if TILE="true"
 export FORCE_TILES=false
 
@@ -496,7 +496,7 @@ function makeImages() {
     local GM_INTERMEDIATE="$QUACK_TMP/$GM_INTERMEDIATE"
 
     if [ ! -f "$SOURCE_IMAGE" ]; then
-        echo "The source image $S does not exists" >&2
+        echo "The source image '$SOURCE_IMAGE' does not exist" >&2
         exit
     fi
 
