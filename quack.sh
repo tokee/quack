@@ -76,7 +76,7 @@ export QA_EXTRA=""
 #       gm and opj_decompress accordingly
 # gm: Try using build-in JPEG 2000 support in graphicsmagic
 # opj_decompress: Use opj_decompress for decoding of JPEG 2000
-: ${J2K_DECOMPRESS:="auto"}
+export J2K_DECOMPRESS="auto"
 
 # The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
@@ -303,7 +303,6 @@ function check_dependencies() {
         exit 2
     fi
     local GM_J2K="$(gm convert -list format | grep JPEG-2000)"
-    echo "***$GM_J2K***"
     if [[ "$J2K_DECOMPRESS" == "gm" && -z "$GM_J2K" ]]; then
         >&2 echo "Error: J2K_DECOMPRESS==gm but the available GraphicsMagic does not have JPEG 2000 support (gm convert -list format)"
         exit 3
@@ -311,7 +310,7 @@ function check_dependencies() {
     # TODO: Turn all of this off is source bitmaps are not JPEG 2000
     if [[ "$J2K_DECOMPRESS" == "auto" ]]; then
         if [[ -z "$GM_J2K" ]]; then
-            echo "Setting J2K_DECOMPRESS=opj_decompress as initial J2K_DECOMPRESS==auto and local GraphicsMagic does not have JPEG 2000 support"
+            echo "Using opj_decompress for JPEG 2000 decompression as J2K_DECOMPRESS==auto and local GraphicsMagic does not have JPEG 2000 support"
             J2K_DECOMPRESS=opj_decompress
         else
             echo "Setting J2K_DECOMPRESS=gm as initial J2K_DECOMPRESS==auto and local GraphicsMagic has JPEG 2000 support"
@@ -322,7 +321,8 @@ function check_dependencies() {
         >&2 echo "Error: J2K_DECOMPRESS==opj_decompress but opj_decompress is not installed"
         exit 2
     fi
-           
+    export J2K_DECOMPRESS
+    
     if [ "." == ".`which convert`" ]; then
         echo "Error: convert missing: Please install Image Magick" >&2
         exit 2
@@ -473,12 +473,23 @@ export -f shouldGenerate
 # repeated Graphic Magick calls on the same source image
 # Input: src dest
 function ensureIntermediate() {
-    local D="$2"
-    if [ ! -s "$D" ]; then
-        gm convert "$1" "$D"
-        # Trap does not work here as new traps for the same signal overrides the old ones
-        trap "rm -f \"${D%.*}.cache\" \"$D\"" EXIT
+    local SRC="$1"
+    local DEST="$2"
+    if [ -s "$DEST" ]; then
+        return
     fi
+
+    if [[ "$J2K_DECOMPRESS" == "opj_decompress" ]]; then
+        local T="$(mktemp --suffix .tif)"
+        opj_decompress -quiet -i "$SRC" -o "$T"
+        gm convert "$T" "$DEST"
+        rm "$T"
+    else
+        gm convert "$SRC" "$DEST"
+    fi
+    
+    # Trap does not work here as new traps for the same signal overrides the old ones
+    trap "rm -f \"${DEST%.*}.cache\" \"$DEST\"" EXIT
 }
 export -f ensureIntermediate
 
