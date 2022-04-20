@@ -14,10 +14,11 @@
 #   limitations under the License.
 #
 # 2013-2014 Toke Eskildsen, State and University Library, Denmark
+# 2022 Toke Eskildsen, Denmark
 #
 
 #
-# Quack 1.5 beta - Quality assurance tool for text scanning projects.
+# Quack 1.6 beta - Quality assurance tool for text scanning projects.
 # 
 # Generates zoomable (OpenSeadragon) views of scanned text pages with overlays
 # containing OCR-text from ALTO-files. The views are static HTML pages that
@@ -33,7 +34,8 @@
 #
 # Requirements:
 #   Some unix-flavor with bash (only tested under Ubuntu)
-#   GraphicsMagick (JPEG2000 -> PNG conversion is twice as fast as ImageMagick)
+#   GraphicsMagick (JPEG2000 -> PNG conversion is twice as fast is GraphicsMagic as ImageMagick)
+#   opj_decompress if GrapghicsMagic does not support JPEG2000
 #   ImageMagick (to create histograms)
 #   openseadragon.min.js (download at http://openseadragon.github.io/#download)
 #   a fairly current browser with JavaScript enabled
@@ -67,6 +69,14 @@ export IMAGE_DISP_QUALITY="95"
 # When generating the QA image, these arguments will be added to the
 # gm convert command
 export QA_EXTRA=""
+# Later graphicmagic and imagemagic distributions does not seem to be
+# compiled with JPEG 2000 support. This setting controls how to decode
+# JPEG 2000. Valid values (default is "auto"):
+# auto: Check if graphicsmagic has JPEG 2000 support and choose between
+#       gm and opj_decompress accordingly
+# gm: Try using build-in JPEG 2000 support in graphicsmagic
+# opj_decompress: Use opj_decompress for decoding of JPEG 2000
+: ${J2K_DECOMPRESS:="auto"}
 
 # The size of thumbnails in folder view.
 export THUMB_IMAGE_SIZE="300x200"
@@ -292,6 +302,27 @@ function check_dependencies() {
         echo "Error: gm missing: Please install Graphics Magick" >&2
         exit 2
     fi
+    local GM_J2K="$(gm convert -list format | grep JPEG-2000)"
+    echo "***$GM_J2K***"
+    if [[ "$J2K_DECOMPRESS" == "gm" && -z "$GM_J2K" ]]; then
+        >&2 echo "Error: J2K_DECOMPRESS==gm but the available GraphicsMagic does not have JPEG 2000 support (gm convert -list format)"
+        exit 3
+    fi
+    # TODO: Turn all of this off is source bitmaps are not JPEG 2000
+    if [[ "$J2K_DECOMPRESS" == "auto" ]]; then
+        if [[ -z "$GM_J2K" ]]; then
+            echo "Setting J2K_DECOMPRESS=opj_decompress as initial J2K_DECOMPRESS==auto and local GraphicsMagic does not have JPEG 2000 support"
+            J2K_DECOMPRESS=opj_decompress
+        else
+            echo "Setting J2K_DECOMPRESS=gm as initial J2K_DECOMPRESS==auto and local GraphicsMagic has JPEG 2000 support"
+            J2K_DECOMPRESS=gm
+        fi
+    fi
+    if [[ "$J2K_DECOMPRESS" == "opj_decompress" && -z "$(which opj_decompress)" ]]; then
+        >&2 echo "Error: J2K_DECOMPRESS==opj_decompress but opj_decompress is not installed"
+        exit 2
+    fi
+           
     if [ "." == ".`which convert`" ]; then
         echo "Error: convert missing: Please install Image Magick" >&2
         exit 2
@@ -303,7 +334,7 @@ function check_dependencies() {
 }
 
 function usage() {
-    echo "quack 1.5 beta - Quality Assurance oriented ALTO viewer"
+    echo "quack 1.6 beta - Quality Assurance oriented ALTO viewer"
     echo ""
     echo "Usage: ./quack.sh source destination"
     echo ""
