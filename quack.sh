@@ -100,6 +100,11 @@ export PAGE_THREADS=8
 # it makes iterative updates fast. If quack settings are tweaked, the relevant
 # FORCE_ options should be temporarily "true" until quack has been run once.
 
+# All FORCE settings can be
+# false: Generate the image if it does not exist, else do nothing
+# true: Always generate the image, even when it already exists
+# skip: Never generate the image (will result in broken images on the generated HTML pages)
+
 # If true, image-pages will be generated even if they already exist.
 export FORCE_PAGES=false
 # If true, the main QA-images will be generated even if they already exist.
@@ -459,13 +464,22 @@ shouldGenerate() {
     local IMG="$2"
     local DES="$3"
 
-    if [ ".true" == ".$FORCE" -a -e "$IMG" ]; then
-        rm -rf "$IMG"
+    if [[ ".skip" == ".$FORCE" ]]; then
+        if [[ ! -s "$IMG" ]]; then
+            # Generate placeholder
+            echo " - Explicit skip of $(basename "$IMG")"
+            convert -size 200x200 xc:skyblue -fill black "$IMG"
+        fi
+        false
+    else 
+        if [ ".true" == ".$FORCE" -a -e "$IMG" ]; then
+            rm -rf "$IMG"
+        fi
+        if [ ! -e "$IMG" -a "." != ".$DES" ]; then
+            echo " - ${IMG##*/} ($DES)"
+        fi
+        [ ! -e "$IMG" ]
     fi
-    if [ ! -e "$IMG" -a "." != ".$DES" ]; then
-        echo " - ${IMG##*/} ($DES)"
-    fi
-    [ ! -e "$IMG" ]
 }
 export -f shouldGenerate
 
@@ -479,7 +493,7 @@ function ensureIntermediate() {
         return
     fi
 
-    if [[ "$J2K_DECOMPRESS" == "opj_decompress" ]]; then
+    if [[ "$J2K_DECOMPRESS" == "opj_decompress" && ( ${SRC##*.} == "j2k" || ${SRC##*.} == "J2K" || ${SRC##*.} == "jp2" || ${SRC##*.} == "JP2" ) ]]; then
         local T="$(mktemp --suffix .tif)"
         opj_decompress -quiet -i "$SRC" -o "$T"
         gm convert "$T" "$DEST"
