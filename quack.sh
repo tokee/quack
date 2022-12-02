@@ -320,6 +320,12 @@ if [ "." == ".$SOURCE" ]; then
     usage
     exit 2
 fi
+if [[ ! -d "$SOURCE" ]]; then
+    >&2 echo "Error: Source folder '$SOURCE' was not available"
+    echo ""
+    usage
+    exit 5
+fi
 pushd "$SOURCE" > /dev/null
 export SOURCE_FULL=`pwd`
 popd > /dev/null
@@ -331,6 +337,7 @@ if [ "." == ".$DEST" ]; then
     usage
     exit 2
 fi
+
 if [ ! -f "$ROOT/web/$DRAGON" ]; then
     if [ -f "$ROOT/$DRAGON" ]; then
         echo "Copying $DRAGON from Quack root to the web folder"
@@ -550,11 +557,17 @@ function makeImages() {
     if shouldGenerate "$FORCE_BLOWN" "$WHITE_IMAGE" "overlay"; then
         ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
         gm convert "$GM_INTERMEDIATE" -black-threshold $BLOWN_WHITE_BT -white-threshold $BLOWN_WHITE_WT -negate -fill \#$OVERLAY_WHITE -opaque black -colors 2 -matte -transparent white  "$WHITE_IMAGE"
+        if [[ ! -s "$WHITE_IMAGE" ]]; then
+            >&2 echo "Error: Unable to generate overlay for whiteout '$WHITE_IMAGE'"
+        fi
     fi
 
     if shouldGenerate "$FORCE_BLOWN" "$BLACK_IMAGE" "overlay"; then
         ensureIntermediate "$SOURCE_IMAGE" "$GM_INTERMEDIATE"
         gm convert "$GM_INTERMEDIATE" -black-threshold $BLOWN_BLACK_BT -white-threshold $BLOWN_BLACK_WT -fill \#$OVERLAY_BLACK -opaque black -colors 2 -matte -transparent white "$BLACK_IMAGE"
+        if [[ ! -s "$BLACK_IMAGE" ]]; then
+            >&2 echo "Error: Unable to generate overlay for blackout '$BLACK_IMAGE'"
+        fi
     fi
     updateTiming $OVERLAY_TIMING $START_OVERLAY > /dev/null
 
@@ -706,13 +719,13 @@ function makeIndex() {
 
     # Generate graphics
     # http://stackoverflow.com/questions/11003418/calling-functions-with-xargs-within-a-bash-script
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
+    echo "$IMAGES" | xargs -I'{}' -P $THREADS bash -c 'makeImages "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate histograms
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $HISTOGRAM_THREADS bash -c 'makeHistograms "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
+    echo "$IMAGES" | xargs -I'{}' -P $HISTOGRAM_THREADS bash -c 'makeHistograms "$@"' _ "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$THUMB_IMAGE_SIZE" "$CROP_PERCENT" "$PRESENTATION_SCRIPT" "$TILE" \;
 
     # Generate pages
-    echo "$IMAGES" | xargs -n 1 -I'{}' -P $PAGE_THREADS bash -c '$PAGE_SCRIPT "$@"' _ "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$IMAGES" \;
+    echo "$IMAGES" | xargs -I'{}' -P $PAGE_THREADS bash -c '$PAGE_SCRIPT "$@"' _ "$UP" "$PARENT" "$SRC_FOLDER" "$DEST_FOLDER" "{}" "$IMAGES" \;
 
 #    if [ ! "." == ".$IMAGES" ]; then
 #        for I in $IMAGES; do

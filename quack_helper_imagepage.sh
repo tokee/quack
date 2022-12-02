@@ -178,6 +178,9 @@ function processALTO() {
     ACCURACY="N/A"
 
     local ALTO="${SRC_FOLDER}/${ALTO_FILE}"
+    if [[ ! -s "$ALTO" ]]; then
+        >&2 echo "Error: '$ALTO' not available from folder $(pwd)"
+    fi
     blackWhite "$SRC" $IMAGE_WIDTH $IMAGE_HEIGHT
     # TODO: Extract relevant elements from the Alto for display
     if [ ! -f "$ALTO" ]; then
@@ -193,6 +196,13 @@ function processALTO() {
     BLOCK_COUNT=`grep -c "<TextBlock " "$ALTO"`
     LINE_COUNT=`grep -c "<TextLine " "$ALTO"`
     STRING_COUNT=`grep -c "<String " "$ALTO"`
+
+    if [[ ! -s "$ALTO" ]]; then
+        >&2 echo "Error: '$ALTO' not available from folder $(pwd). Unable to generate compact representation"
+    fi
+    >&2 echo "Alto file from $(pwd) is $ALTO_FILE"
+
+    
     local ALTO_COMPACT=`cat "$ALTO_FILE" | sed ':a;N;$!ba;s/\\n/ /g'`
 #    local PTAG=`echo "$ALTO_COMPACT" | grep -o "<PrintSpace[^>]\\+>"`
     local PTAG=`echo "$ALTO_COMPACT" | grep -o "<Page[^>]\\+>"`
@@ -223,6 +233,9 @@ function processALTO() {
     IDPREVS=""
 
     # Remove newlines from the ALTO
+    if [[ ! -s "$ALTO" ]]; then
+        >&2 echo "Error: '$ALTO' not available from folder $(pwd). Unable to generate no-newline representation"
+    fi
     SANS=`cat "$ALTO" | sed ':a;N;$!ba;s/\\n/ /g'`
 
     processElements "$SANS" "ComposedBlock" "composed"
